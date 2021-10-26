@@ -140,7 +140,7 @@ TODO:
           - `2` to select the second partition
           - `linux` to use the Linux partition type (`0x83`)
           - `w` to write out the updated partition table
-      + Next, we can set up LUKS:
+      + Next, we can set up LUKS ([1](https://wiki.archlinux.org/title/dm-crypt/Device_encryption#Encryption_options_with_dm-crypt), [2](https://gist.github.com/ladinu/bfebdd90a5afd45dec811296016b2a3f#setup-luks-and-add-the-keys), [3](https://linux.die.net/man/8/cryptsetup)):
         ```bash
         $ args=(
             --type=luks1              # GRUB support for LUKS2 is still dodgy, even with the right key and cipher
@@ -167,7 +167,23 @@ TODO:
         ```
 
    - Root:
-     + First let's set this to an opaque "Linux" partition 
+     + First let's set this to a Solaris partition type:
+
+     ([1](https://nixos.wiki/wiki/ZFS), [2](https://arstechnica.com/information-technology/2020/05/zfs-101-understanding-zfs-storage-and-performance/), [3](zhttps://openzfs.github.io/openzfs-docs/man/8/zpool-create.8.html), [4](https://openzfs.github.io/openzfs-docs/man/7/zpool-features.7.html). [5](https://openzfs.github.io/openzfs-docs/man/7/zpoolprops.7.html))
+     -o `pbkdf2iters` iterations from `cryptsetup bench` to match ^ (2000 ms)
+     encryption on, passphrase, file source
+     compression on, lz4
+     datasets:
+       - /, nixstore, home?, docker, data
+     compression off on nixstore, docker
+     reserved
+     atime off, xattrs on, etc.
+     snapshots on, off on nixstore, docker
+     trim on; scheduled cleanup
+     -o comment
+
+     pool name: x
+
 
    - Swap:
      + First the partition type:
