@@ -42,6 +42,7 @@ TODO:
       * I think the appeal is that you don't have to enter a password to unlock, for example, the boot drive; provided Secure Boot works and is happy your boot drive can just automatically unlock
       * I think this is supposed to be similar to how BitLocker works on Windows
       * Given that it's tricky to get Secure Boot working with NixOS and that I don't mind having to enter a password on boot, I'm going to ignore this
+    + LUKS (and nixos' initrd) seem to have support for yubikeys; something to look into later
   - XFS vol for docker?
     + Using XFS for `/var/lib/docker` is recommended [so that you can the `overlay2` storage driver](https://docs.docker.com/storage/storagedriver/overlayfs-driver/#configure-docker-with-the-overlay-or-overlay2-storage-driver)
       * ext4 seems to work too
@@ -56,6 +57,7 @@ TODO:
     + regardless of what backup solution is used: remember to use `-w` with send! (TODO)
   - [`sanoid`](https://github.com/jimsalterjrs/sanoid/) looks neat for backups
     + and it has [a nixpkg](https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/services/backup/sanoid.nix)
+  - set up mailing for ZED
 
 ## Setup
 
