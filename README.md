@@ -19,14 +19,16 @@
     + ladinu gist (this is closest to what I ended up doing)
     + ubuntu secure boot page
     + nixos github issue about secure boot (in particular the comments about self-signing)
-    + arch linux encrpyted root/full disk encryption page
+    + arch linux encrypted root/full disk encryption page
+    + [arch linux dm-crypt Device_encryption page](https://wiki.archlinux.org/title/dm-crypt/Device_encryption)
+    + [Ars Technica OpenZFS native encryption guide](https://arstechnica.com/gadgets/2021/06/a-quick-start-guide-to-openzfs-native-encryption/)
   - Storing secrets:
     + `sops`, `nix-sops` (todo: find that blog post)
     + `age`, `agenix`, `rage`, `ragenix`
     + blog post about some alternatives: https://christine.website/blog/nixos-encrypted-secrets-2021-01-20
   - Other tooling/helpers:
     + direnv
-    + niv
+    + niv (actually just use flakes?)
     + flake-utils-plus (TODO: name)
     + home-manager
     + nixos-hardware
@@ -39,6 +41,7 @@
     + _ other one from V
     + list of configurations on the NixOS wiki
     + other one from twitter; in FF tabs (TODO)
+    + https://github.com/mitchellh/nixos-config
 
 
 ## misc/todo
