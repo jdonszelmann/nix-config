@@ -58,6 +58,8 @@ TODO:
   - [`sanoid`](https://github.com/jimsalterjrs/sanoid/) looks neat for backups
     + and it has [a nixpkg](https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/services/backup/sanoid.nix)
   - set up mailing for ZED
+  - you can run your own firefox sync server??
+  - mbpfan is a service that nixos has
 
 ## Setup
 
@@ -76,13 +78,11 @@ TODO:
    last-lba: 500118158
    sector-size: 512
 
-   /dev/sda1 : start=        2048, size=     1048576, type=EBD0A0A2-B9E5-4433-87C0-68B6B72699C7, uuid=4567C05E-559F-4F10-A2E6-5D98DA1B53B2, name="EFI System Partition"
+   /dev/sda1 : start=        2048, size=     1048576, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B, uuid=4567C05E-559F-4F10-A2E6-5D98DA1B53B2, name="EFI System Partition"
    /dev/sda2 : start=     1050624, size=    10485760, type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, uuid=CB382612-A2AF-4FBC-87CB-A68A49ED7E86, name="boot"
-   /dev/sda3 : start=    11536384, size=   438249472, type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, uuid=7B032494-5FC8-460B-BEE5-5A410D518516, name="root"
+   /dev/sda3 : start=    11536384, size=   438249472, type=6A85CF4D-1DD2-11B2-99A6-080020736631, uuid=7B032494-5FC8-460B-BEE5-5A410D518516, name="root"
    /dev/sda4 : start=   449785856, size=    50331648, type=0657FD6D-A4AB-43C4-84E5-0933C84B4F4F, uuid=8E8506B3-2648-49FC-BF19-47CEE8CF7FD5, name="swap"
    ```
-
-   NOTE: there are reports of versions of the debian installer mangling partitions with type `8300`; I can't find the forum post where I saw < but maybe be careful.
 
    In the future, `sfdisk /dev/sda < /path/to/file/containing/the/above` can be used to set up the drive as above.
 
@@ -122,7 +122,7 @@ TODO:
 
    You can store these keys in a secure place if you wish. Alternatively, you can generate these keys [onto a ramdisk](https://wiki.archlinux.org/title/dm-crypt/Device_encryption#Storing_the_keyfile_in_ramfs) so there is no potential trace of them on your current filesystem(s).
 
-3) Now let's make some partitions. In order:
+3) Now let's make some partitions and filesystems. In order:
     - EFI System Partition:
       + First let's set this to actually be an EFI System Partition:
         * `sudo fdisk /dev/sda`
@@ -131,7 +131,7 @@ TODO:
           - `uefi` to use the EFI System Partition type (`0xEF`)
           - `w` to write out the updated partition table
       + Then we can actually make the filesystem:
-        * `sudo mkfs.fat -F 32 /dev/sda1`
+        * `sudo mkfs.fat -F 32 -n ESP /dev/sda1`
 
     - Boot:
       + First let's set this to be an opaque "Linux" partition type so things that don't understand LUKS don't break:
@@ -160,19 +160,35 @@ TODO:
         )
 
         # This will prompt you for a password. This will be the password you'll need to enter at boot.
-        $ cryptsetup luksFormat "${args[@]}" /dev/sda2
+        $ sudo cryptsetup luksFormat "${args[@]}" /dev/sda2
 
         # Next we'll add the keyfile as well:
-        $ cryptsetup luksAddKey /dev/sda2 ./boot.key
+        $ sudo cryptsetup luksAddKey /dev/sda2 ./boot.key
+        ```
+      + Finally, we can now create a filesystem:
+        ```bash
+        # First we need to unlock/"mount" the LUKS partition:
+        $ sudo cryptsetup luksOpen /dev/sda2 boot-partition -d ./boot.key
+
+        # Then we can actually make a filesystem. Let's go with `ext4`:
+        $ sudo mkfs.ext4 -L boot /dev/mapper/boot-partition
         ```
 
    - Root:
-     + First let's set this to a Solaris partition type:
+     + First let's set this to a "Solaris root" partition type:
+        * `sudo fdisk /dev/sda`
+          - `t` to change a partition type
+          - `3` to select the third partition
+          - `66` to use the Solaris root partition type (`0xBF`)
+          - `w` to write out the updated partition table
+        * NOTE: there are reports of versions of the debian installer mangling partitions with type `8300`; I can't find the forum post where I saw < but maybe be careful.
 
-     ([1](https://nixos.wiki/wiki/ZFS), [2](https://arstechnica.com/information-technology/2020/05/zfs-101-understanding-zfs-storage-and-performance/), [3](zhttps://openzfs.github.io/openzfs-docs/man/8/zpool-create.8.html), [4](https://openzfs.github.io/openzfs-docs/man/7/zpool-features.7.html). [5](https://openzfs.github.io/openzfs-docs/man/7/zpoolprops.7.html))
+
+
+     ([1](https://nixos.wiki/wiki/ZFS), [2](https://arstechnica.com/information-technology/2020/05/zfs-101-understanding-zfs-storage-and-performance/), [3](https://openzfs.github.io/openzfs-docs/man/8/zpool-create.8.html), [4](https://openzfs.github.io/openzfs-docs/man/7/zpool-features.7.html). [5](https://openzfs.github.io/openzfs-docs/man/7/zpoolprops.7.html))
      -o `pbkdf2iters` iterations from `cryptsetup bench` to match ^ (2000 ms)
      encryption on, passphrase, file source
-     compression on, lz4
+     compression on, lz4 (actually just use "on"; ZFS will probably just pick lz4 anyways but it knows best)
      datasets:
        - /, nixstore, home?, docker, data
      compression off on nixstore, docker
@@ -184,7 +200,6 @@ TODO:
 
      pool name: x
 
-
    - Swap:
      + First the partition type:
        * `sudo fdisk /dev/sda`
@@ -193,3 +208,14 @@ TODO:
          - `swap` to use the Swap partition type (`0x82`)
          - `w` to write out the updated partition table
      + Finally: `sudo mkswap -L swap /dev/sda4`
+
+   - Ultimately you should end up with:
+     ```bash
+     $ sudo fdisk -l /dev/sda
+     TODO
+     $ sudo cryptsetup luksDump /dev/sda2
+     TODO
+     $ sudo zpool list -v
+     TODO 
+     ```
+4) Finally, let's mount in the filesystems the way they'll be used by the new system and let's copy over the keys.
