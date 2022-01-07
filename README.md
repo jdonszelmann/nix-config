@@ -89,6 +89,11 @@
     + arch linux encrypted root/full disk encryption page
     + [arch linux dm-crypt Device_encryption page](https://wiki.archlinux.org/title/dm-crypt/Device_encryption)
     + [Ars Technica OpenZFS native encryption guide](https://arstechnica.com/gadgets/2021/06/a-quick-start-guide-to-openzfs-native-encryption/)
+  - secure boot:
+    + https://nwildner.com/posts/2020-07-04-secure-your-boot-process/ (not quite what we're doing but a useful overview)
+    + https://github.com/NixOS/nixpkgs/issues/42127
+    + https://github.com/NixOS/nixpkgs/pull/53901#issuecomment-894797193
+    + https://github.com/frogamic/nix-machines/tree/main/modules/systemd-secure-boot
   - Storing secrets:
     + `sops`, `nix-sops` (todo: find that blog post)
     + `age`, `agenix`, `rage`, `ragenix`
@@ -146,7 +151,7 @@
     + other one from twitter; in FF tabs (TODO)
     + https://github.com/mitchellh/nixos-config
     + https://github.com/JorelAli/nixos/blob/master/configuration.nix
-
+    + https://github.com/frogamic/nix-machines
 
 ## misc/todo
 
