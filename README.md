@@ -254,3 +254,37 @@ build does:
     + nix-daemon does this
 
 build-vm gives you a handy qemu runner script (doesn't even need a bootloader)
+
+# structure
+  - `lib`: nix helper utils, if the need arises
+  - `machines`: ...
+  - `modules`: my own nixos modules
+  - `mixins`: config things for other things. some call these "roles" or services or w/e
+    + `darwin`: nix-darwin module things (these are really just modules too)
+    + `home-manager` (also just modules)
+      * [ ] have an `all` or a `default` that is system aware or something
+    + `nixos`: nixos module config stuff (also just modules)
+    + `overlays`
+      * each are overlay fns (i.e. prev, final: ...)
+      * have an `all`
+    + `users`
+  - `packages`: my own nixpkgs
+    + [ ] have an overlay helper in the style of: https://github.com/frogamic/nix-machines/blob/main/pkgs/default.nix, maybe
+  - `resources`: secrets, config files, other supporting Things. mixins and machines can make reference to these freely, no one else.
+
+top-level (flake.nix) should import the stuff in modules as well as external modules
+see: https://github.com/frogamic/nix-machines/blob/6e2bf36b60fd288476a83b7e7babebfc012c3f6e/flake.nix#L16-L44
+
+expose nixosModule, nixosModules, pkgs, lib, overlay, and overlays in default.nix in the style of: https://github.com/frogamic/nix-machines/blob/main/default.nix
+
+flake [exports](https://nixos.wiki/wiki/Flakes#Output_schema):
+  - [`nixosConfigurations`](https://nixos.wiki/wiki/Flakes#Using_nix_flakes_with_NixOS): auto-populate the list from `./machines`, etc
+  - `packages`: the things in packages
+  - `apps`: apps to export? i.e. things with their configs builtin? can just reference config stuff in resources I guess?
+  - `overlay`: all of the overlays
+  - `overlays`: the things in overlays, a list?
+  - `nixosModule`: all of the modules
+  - `nixosModules`: things in modules, an attrset?
+  - `checks`: check that builds all the stuff? vm images? subs in fake secrets? this is what CI should run, ideally
+  - `defaultApp`: runs the vm produces by machines/vm?
+
