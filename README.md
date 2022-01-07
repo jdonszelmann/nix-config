@@ -58,6 +58,18 @@
     + [Nix Flakes (NixCon 2019)](https://www.youtube.com/watch?v=UeBX7Ide5a0) ([Eelco Dolstra](https://github.com/edolstra))
     + https://ianthehenry.com/posts/how-to-learn-nix/
     + [Assembling SoCs with Nix (NixCon 2015)](https://www.youtube.com/watch?v=0n3cAg0R22c)
+    + home-manager vs {nix-env, nixos}:
+      * [vs nixos](https://www.reddit.com/r/NixOS/comments/j3wvun/what_role_does_home_manager_fill_that_nixos_cant/)
+      * [vs nix-env/profiles](https://discourse.nixos.org/t/difference-between-nix-profiles-and-home-manager/9539)
+    + [NixOS, `nix-darwin`, and `home-manager`](https://www.youtube.com/watch?v=IUsQt4NRCnc) (Burke Libbey)
+      * good quick overview of how the different nix "usages" differ in what they try to do
+    + [From `nix-env` to `home-manager`](https://www.youtube.com/watch?v=PmD8Qe8z2sY) (Burke Libbey)
+      * good `home-manager` intro
+    + [Intro to Flakes](https://www.youtube.com/watch?v=K54KKAx2wNc) (Wil T)
+    + [Moving NixOS System Conifguration Into A Flake](https://www.youtube.com/watch?v=mJbQ--iBc1U) (Wil T)
+      * helpful intro to using NixOS + `home-manager` with flakes
+    + [ ] TODO [Running Nix Code: nix eval and nix repl](https://www.youtube.com/watch?v=9kXahFVnFqw)
+    + [ ] TODO [Channels and NIX_PATH](https://www.youtube.com/watch?v=yfmTgEA2_6k)
   - ZFS:
     + [Ars Technica ZFS 101](https://arstechnica.com/information-technology/2020/05/zfs-101-understanding-zfs-storage-and-performance/)
     + [NixOS Wiki ZFS Page](https://nixos.wiki/wiki/ZFS)
@@ -89,9 +101,19 @@
     + TODO
   - bootstrapping/bootstrapping stages:
     + TODO
+  - nixpkgs: how `lib`, `stdenv`, and friends work
+    + [ ] (TODO) [Demystifying nixpkgs Part 1: preliminaries](https://www.youtube.com/watch?v=oWJaTb5uoT0) (Burke Libbey)
+    + [ ] (TODO) [Demystifying nixpkgs Part 2: diving in](https://www.youtube.com/watch?v=q8bZy9kuzEY) (Burke Libbey)
+    + [ ] (TODO) [Demystifying nixpkgs Part 3: The "Standard" Library](https://www.youtube.com/watch?v=qYGo9QYNVpM) (Burke Libbey)
+  - `nix-darwin`:
+    + TODO
+  - `home-manager`:
+    + [ ] (TODO) [`home-manager`: Reading the Source](https://www.youtube.com/watch?v=CID_ZbwObJ8) (Burke Libbey)
+    + TODO
   - containers:
     + https://nixos.wiki/wiki/NixOS_Containers
     + https://nixos.org/manual/nixos/stable/#ch-containers
+    + https://blog.beardhatcode.be/2020/12/Declarative-Nixos-Containers.html
   - direnv and friends:
     + [`lorri`](https://github.com/nix-community/lorri)
       * [lorri — Your project's nix env (NixCon 2019)](https://www.youtube.com/watch?v=WtbW0N8Cww4)
@@ -136,8 +158,17 @@ https://github.com/nmattia/niv
 https://github.com/ryantm/agenix
 https://github.com/nix-community/lorri
 `MOZ_USE_XINPUT2=1` for Firefox (https://bugzilla.mozilla.org/show_bug.cgi?id=1438107)
+`MOZ_ENABLE_WAYLAND`
 
+
+enable fstrim: https://www.reddit.com/r/NixOS/comments/rbzhb1/if_you_have_a_ssd_dont_forget_to_enable_fstrim/
+
+use nixos-hardware flake
 enable nix sandbox on macOS?
+enable flakes
+enable content-addressed Nix: https://discourse.nixos.org/t/content-addressed-nix-call-for-testers/12881
+use unstable channel
+remap caps lock: https://unix.stackexchange.com/questions/377600/in-nixos-how-to-remap-caps-lock-to-control
 
 LICENSE
 
@@ -180,13 +211,36 @@ zfs snapshot, cleanup, etc. (not on battery power, etc.; or reduced freq for sna
       - best I can come up with is to create a wrapper that checks the paths for "release"/"debug"/"bench", etc. and shells out to `mold`/`lld` as appropriate
   - rustc-wrapper = sccache
 
+update rust-template with nix stuff (.envrc, flake.nix, flake.lock, shell.nix with flake-compat, etc.; gonna leave nix out of the CI for now I think)
+(also action-rs rust cache, maybe; rust-version in cargo.toml, 2021 edition, rustfmt updates, .toml for rustfmt and clippy, clippy updates, remove lint list dump, use `include_str!` for readme, etc.)
+
+https://www.youtube.com/watch?v=XZ9nPZbaYfE
+
 ## misc notes
 
-nix-env uses nix (build and store and friends) to make profiles (set ~/.nix-profile, and to make symlink forests in the form of profiles in the nix store)
+nix-env uses nix (build and store and friends) to make nix profiles (set ~/.nix-profile, and to make symlink forests in the form of profiles in the nix store)
   - takes a bunch of derivations and gives you a profile
-nixos...
-nix-darwin
-homemanager
+    + `nix-profile` handles actually making the profile
+      * "user-env" handles [making a manifest](https://github.com/NixOS/nix/blob/00f9957552180ef44fe5fab98f7d09cd15d99506/src/nix-env/user-env.cc#L49-L111) which lists all the derivations in the env + their outs, etc.
+      * this manifest along with the derivations in the env are [fed](https://github.com/NixOS/nix/blob/00f9957552180ef44fe5fab98f7d09cd15d99506/src/nix-env/user-env.cc#L113-L127) to [a top-level derivation](https://github.com/NixOS/nix/blob/f24ac3115f154edf72b995cffae6da3793862294/src/nix-env/buildenv.nix)
+      * that in turn [shells out](https://github.com/NixOS/nix/blob/f24ac3115f154edf72b995cffae6da3793862294/src/nix-env/buildenv.nix#L6) to the [built in `buildenv` derivation](https://github.com/NixOS/nix/blob/f24ac3115f154edf72b995cffae6da3793862294/src/libstore/builtins/buildenv.cc) that handles stitching together the symlink forest and handling conflicts and such
+  - nix-env then sticks this profile in your home directory with the appropriate glue (generations in `/nix/var/profiles/per-user/...`, hooks (as part of nixos? it's unclear who puts these in the default bashrc) to have `$XDG_DATA_DIRS` point to the generated folders, etc)
+nixpkgs:
+  - repository of _packages_
+  - uses stdenv, lib, callPackage idiom, etc
+  - config and override system
+  - overlays as the mechanism to layer
+nixos:
+  - set of _modules_
+  - also makes a derivation (out of modules which can in turn pull in nixpkgs) that's then used to make a profile, just like `nix-env`
+    + but this profile has different stuff, the generations go in `/nix/var/nix/profiles/system-*` (I think), managed by `nixos-*` commands, symlinked to `/run/current-system`, etc.
+    + the `nixos-*` commands handle all of ^ plus doing things like restarting systemd service on switch and such
+home-manager:
+  - also generates a nix profile but from a config file (unlike nix-env which modifies the "current" profile)
+  - can "manage" files that aren't in the nix store; i.e. doesn't just stick everything in the `~/.nix-profile` (?)
+  - cross platform, not tied to nixos
+nix-darwin:
+  - like nixos but for macOS; manages system settings too (no idea how though)
 
 build does:
   - instantiate (runs the evaluator to produce derivations)
