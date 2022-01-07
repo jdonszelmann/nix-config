@@ -142,9 +142,9 @@
     + [`nix-du`](https://github.com/symphorien/nix-du)
     + [`nix-query-tree-viewer`](https://github.com/cdepillabout/nix-query-tree-viewer)
   - Other nixOS configurations:
-    + Eliza Weismann (@hawkw)'s dotfiles
-    + Rebecca Turner (@9999years)'s nix-config
-    + Jade Lovelace's config
+    + [Eliza Weismann (@hawkw)'s dotfiles](https://github.com/hawkw/dotfiles)
+    + [Rebecca Turner (@9999years)'s nix-config](https://github.com/9999years/nix-config)
+    + [jade lovelace (@lf-)'s dotfiles](https://github.com/lf-/dotfiles/tree/main/configs/nix)
     + DieracDelta
     + _ other one from V
     + list of configurations on the NixOS wiki
