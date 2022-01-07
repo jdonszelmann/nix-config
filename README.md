@@ -288,3 +288,29 @@ flake [exports](https://nixos.wiki/wiki/Flakes#Output_schema):
   - `checks`: check that builds all the stuff? vm images? subs in fake secrets? this is what CI should run, ideally
   - `defaultApp`: runs the vm produces by machines/vm?
 
+# names for later
+
+[lich](https://en.wikipedia.org/wiki/Lich_(star)) (undead, pulsar)
+fafnir
+castor
+deneb
+acrux (system of 6)
+spica (system of 2)
+castor (system of 6)
+aniara
+meissa
+mago
+mira
+procyon
+
+dimidium
+lete
+haik (water)
+eyeke
+dulcinea, quijote, sancho, rocinante (from don quixote, around cervantes (mu arae))
+around lich:
+  - poltergist
+  - phobetor
+  - dragur
+isagel (character from aniara)
+tondra (nap, sleepy)
