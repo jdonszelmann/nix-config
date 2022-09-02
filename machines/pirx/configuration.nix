@@ -18,8 +18,7 @@
   # https://nixos.wiki/wiki/ZFS#Caveats
   boot.kernelParams = [ "nohibernate" ];
   
-  
-  # TODO: see if we need to add modules to initrd for accelerating
+  # !!! see if we need to add modules to initrd for accelerating
   # decryption (see: nixos.wiki/wiki/Full_Disk_Encryption#Perf_test)
   #
   # Since our root partition is ZFS encrypted, not LUKS encrypted,

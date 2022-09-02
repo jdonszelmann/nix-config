@@ -94,6 +94,7 @@
     + https://github.com/NixOS/nixpkgs/issues/42127
     + https://github.com/NixOS/nixpkgs/pull/53901#issuecomment-894797193
     + https://github.com/frogamic/nix-machines/tree/main/modules/systemd-secure-boot
+    + https://www.rodsbooks.com/efi-bootloaders/controlling-sb.html
   - Storing secrets:
     + `sops`, `nix-sops` (todo: find that blog post)
     + `age`, `agenix`, `rage`, `ragenix`
@@ -287,6 +288,8 @@ flake [exports](https://nixos.wiki/wiki/Flakes#Output_schema):
   - `nixosModules`: things in modules, an attrset?
   - `checks`: check that builds all the stuff? vm images? subs in fake secrets? this is what CI should run, ideally
   - `defaultApp`: runs the vm produces by machines/vm?
+
+TODO: register this repo as a flake registry (just `r`)
 
 # names for later
 

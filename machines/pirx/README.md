@@ -15,7 +15,7 @@ TODO:
   + run `sfdisk --dump /dev/sda` (pipe output into `sfdisk /dev/sda` to restore)
   + maybe add extra utils (gparted, etc. to the boot partition)
 
-ashift=9: The internal SSD (`HFS256G3AMNB-220`, a 256GB SK Hynix part) has a 512KB block size (`sudo blockdev --getsize /dev/sda`).
+ashift=9: The internal SSD (`HFS256G3AMNB-220`, a 256GB SK Hynix part) has a 512B block size (`sudo blockdev --getpbsz /dev/sda`).
 default
 encryption
   - grub cannot boot from encrypted ZFS
