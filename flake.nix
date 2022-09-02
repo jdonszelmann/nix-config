@@ -5,13 +5,14 @@
     extra-substituters = [
       "https://nix-community.cachix.org"
       "https://rrbutani.cachix.org"
+      "https://cache.garnix.io"
     ];
     extra-trusted-public-keys = [
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
       "rrbutani.cachix.org-1:FUpcK9RyZjjdOm8qherJl9+wfTGf6ptANvH6LZF63Ro="
+      "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
     ];
   };
-
 
   inputs = {
     nixpkgs.url = github:nixos/nixpkgs/nixos-unstable;
