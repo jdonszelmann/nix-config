@@ -291,6 +291,10 @@ flake [exports](https://nixos.wiki/wiki/Flakes#Output_schema):
 
 TODO: register this repo as a flake registry (just `r`)
 
+TODO: plain-text diffing for (r)age? (the way `sops -d` is used as a git diff filter)
+`agenix` with a working nix-darwin module: https://github.com/montchr/agenix/compare/darwin-support...rtimush:agenix:darwin-support
+ - home-manager: https://github.com/ryantm/agenix/pull/108
+
 # names for later
 
 [lich](https://en.wikipedia.org/wiki/Lich_(star)) (undead, pulsar)

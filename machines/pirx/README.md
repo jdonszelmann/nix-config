@@ -107,6 +107,8 @@ TODO:
           - being able to enter the "key" by hand means that you can effectively pick a password and have it be your key
       + Both the keys are stored in the initial ram file system (initramfs) so that, once GRUB has loaded the initramfs, the initramfs can unlock the `/boot` and `/` filesystems
         * this is okay! `/boot` (the filesystem holding the initramfs) is itself encrypted which is what makes this still secure
+    - haven't investigated using systemd-boot instead of GRUB, [allegedly that works](https://gist.github.com/ladinu/bfebdd90a5afd45dec811296016b2a3f?permalink_comment_id=4011408#gistcomment-4011408); no idea if systemd-boot supports LUKS2 for encrypted root
+
 
    Okay! With that out of the way let's make some keys:
    ```bash
@@ -146,7 +148,7 @@ TODO:
             --type=luks1              # GRUB support for LUKS2 is still dodgy, even with the right key and cipher
                                       # See: https://bbs.archlinux.org/viewtopic.php?id=268460
 
-            --cipher=aes-xts-plain64  # According to `cryptsetup bench`, `aes-xts` w/a 256 key is fastest
+            --cipher=aes-xts-plain64  # According to `cryptsetup benchmark`, `aes-xts` w/a 256 key is fastest
             --key-size=256
 
             --hash=sha256
@@ -185,8 +187,8 @@ TODO:
 
 
 
-     ([1](https://nixos.wiki/wiki/ZFS), [2](https://arstechnica.com/information-technology/2020/05/zfs-101-understanding-zfs-storage-and-performance/), [3](https://openzfs.github.io/openzfs-docs/man/8/zpool-create.8.html), [4](https://openzfs.github.io/openzfs-docs/man/7/zpool-features.7.html). [5](https://openzfs.github.io/openzfs-docs/man/7/zpoolprops.7.html))
-     -o `pbkdf2iters` iterations from `cryptsetup bench` to match ^ (2000 ms)
+     ([1](https://nixos.wiki/wiki/ZFS), [2](https://arstechnica.com/information-technology/2020/05/zfs-101-understanding-zfs-storage-and-performance/), [3](https://openzfs.github.io/openzfs-docs/man/8/zpool-create.8.html), [4](https://openzfs.github.io/openzfs-docs/man/7/zpool-features.7.html). [5](https://openzfs.github.io/openzfs-docs/man/7/zpoolprops.7.html), [6](https://arstechnica.com/gadgets/2021/06/a-quick-start-guide-to-openzfs-native-encryption/), [7](https://jrs-s.net/2018/08/17/zfs-tuning-cheat-sheet/), [8](https://utcc.utoronto.ca/~cks/space/blog/tech/SSDsAnd4KSectors?showcomments))
+     -o `pbkdf2iters` iterations from `cryptsetup benchmark` to match ^ (2000 ms)
      encryption on, passphrase, file source
      compression on, lz4 (actually just use "on"; ZFS will probably just pick lz4 anyways but it knows best)
      datasets:
@@ -197,6 +199,7 @@ TODO:
      snapshots on, off on nixstore, docker
      trim on; scheduled cleanup
      -o comment
+     edonr hash
 
      pool name: x
 
@@ -208,6 +211,9 @@ TODO:
          - `swap` to use the Swap partition type (`0x82`)
          - `w` to write out the updated partition table
      + Finally: `sudo mkswap -L swap /dev/sda4`
+
+    TODO: encrypted swap (nixos option)
+    TODO: encrypted swap with hibernate support (add swap partition to LUKS? put swap on the boot partition?)
 
    - Ultimately you should end up with:
      ```bash
