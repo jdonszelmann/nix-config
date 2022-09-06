@@ -69,42 +69,4 @@ in {
 
     nix.settings.trusted-users = lib.mkIf cfg.addToNixTrustedUsers [ name ];
   };
-
-/*
-  config = {
-    users.users.${name} = let
-      nixosSpecificOptions = {
-        home = "/home/${name}";
-        isNormalUser = true;
-        # passwordFile = ""; # TODO!
-
-        extraGroups = lib.optionals cfg.root [ "wheel" ];
-      };
-
-      nixDarwinSpecificOptions = {
-        home = "/Users/${name}";
-        isHidden = false;
-      };
-
-      extras = if isDarwin then
-        nixDarwinSpecificOptions
-      else
-        nixosSpecificOptions;
-    in {
-      inherit name;
-      description = "User account for ${fullName}.";
-      home = "/home/${name}";
-      # createHome = true; # !!! TODO: is this what we want? even on darwin?
-      createHome = 234;
-    } // extras;
-
-    nix.setting.trusted-users = [ name ];
-  } // (lib.mkIf isDarwin {
-    users.groups = {
-      staff.members = [ name ];
-    } // (lib.mkIf cfg.root {
-      admin.members = [ name ];
-    });
-  });
-*/
 }
