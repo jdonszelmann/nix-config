@@ -31,7 +31,7 @@
     flu.url = github:numtide/flake-utils;
   };
 
-  outputs = inputs@{ self, nixpkgs, darwin, home-manager, ragenix, flu }: let
+  outputs = flakeInputs@{ self, nixpkgs, darwin, home-manager, flu, ... }: let
     dir = import ./util/list-dir.nix { lib = nixpkgs.lib; };
     conditionallyProvideInputs = func: inputs:
       if builtins.isFunction func && (builtins.functionArgs func) != {} then
@@ -55,7 +55,7 @@
           drvs =
             (tagAndExtract { tag = "nixos"; ex = d: d.config.system.build.toplevel; }) //
             (tagAndExtract { tag = "darwin"; ex = d: d.system; }) //
-            (tagAndExtract { tag = "home"; ex = d: d.activationPackage; }); 
+            (tagAndExtract { tag = "home"; ex = d: d.activationPackage; });
         in
           filterAttrs (n: v: v.system == sys) drvs;
 
@@ -83,8 +83,8 @@
         # https://nixos.wiki/wiki/Flakes#Using_nix_flakes_with_NixOS
         mapFunc = n: v: let
           config = defaultFunc n v;
-          flakeInputs = inputs;
-          config' = config // { specialArgs = flakeInputs // config.specialArgs or {}; };
+          config' = config //
+            { specialArgs = { inherit(config) system; } // inputs // config.specialArgs or {}; };
         in
           nixpkgs.lib.nixosSystem config';
       }; }
@@ -104,8 +104,8 @@
         # https://github.com/LnL7/nix-darwin#flakes-experimental
         mapFunc = n: v: let
           config = defaultFunc n v;
-          flakeInputs = inputs;
-          config' = config // { inputs = flakeInputs // config.inputs or {}; };
+          config' = config //
+            { inputs = { inherit (config) system; } // inputs // config.inputs or {}; };
         in
           darwin.lib.darwinSystem config';
       }; }
@@ -127,13 +127,12 @@
         # https://github.com/nix-community/home-manager/blob/5bd66dc6cd967033489c69d486402b75d338eeb6/templates/standalone/flake.nix#L13-L28
         mapFunc = n: v: let
           config = defaultFunc n v;
-          flakeInputs = inputs;
           pkgs = nixpkgs.legacyPackages.${config.system};
           config' =
             (nixpkgs.lib.filterAttrs (n: _: n != "system") config) // { inherit pkgs; } //
 
             # Prepend to `extraSpecialArgs`:
-            { extraSpecialArgs = flakeInputs // config.extraSpecialArgs or {}; };
+            { extraSpecialArgs = { inherit (config) system; } // inputs // config.extraSpecialArgs or {}; };
           in
             home-manager.lib.homeManagerConfiguration config';
       }; }
