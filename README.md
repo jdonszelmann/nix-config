@@ -189,7 +189,7 @@ IFD: https://nixos.wiki/wiki/Import_From_Derivation
   - https://fzakaria.com/2020/10/20/nix-parallelism-import-from-derivation.html
 
 install lorri
-look into 
+look into
 direnv vscode: https://marketplace.visualstudio.com/items?itemName=Rubymaniac.vscode-direnv
 
 nix gc option (for lorri, mostly) that only frees things that haven't been _used_ in 1week+, etc.
@@ -294,6 +294,13 @@ TODO: register this repo as a flake registry (just `r`)
 TODO: plain-text diffing for (r)age? (the way `sops -d` is used as a git diff filter)
 `agenix` with a working nix-darwin module: https://github.com/montchr/agenix/compare/darwin-support...rtimush:agenix:darwin-support
  - home-manager: https://github.com/ryantm/agenix/pull/108
+
+TODO: running nixos modules outside of home-manager: https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/testing/service-runner.nix
+
+TODO: a nixos-module service to home-manager module adapter!
+this is probably a good starting point: https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/testing/service-runner.nix
+
+TODO: why isn't there a service abstraction in `home-manager` that papers over systemd/launchctl? https://discourse.nixos.org/t/services-on-macos/9095/4 https://github.com/nix-community/home-manager/issues/91 https://github.com/nix-community/home-manager/issues/91#issuecomment-782926192
 
 # names for later
 
