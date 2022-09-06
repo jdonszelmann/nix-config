@@ -31,7 +31,7 @@ swap: the NixOS ZFS wiki says [not to use a zvol for swap](https://nixos.wiki/wi
 compression on on all (lz4)
 dedupe:
   + not on nix store (using autoOptimiseStore so no point really + we have not much RAM)
-  + 
+  +
 2GB max arc cache
   + we don't have much ram
 
@@ -64,6 +64,9 @@ TODO:
 ## Setup
 
 ### Filesystems
+
+TODO: perhaps look into _describing_ these partitions with [`disko`](https://github.com/nix-community/disko)
+
 
 1) First, set up `/dev/sda1` (the internal 256GB `HFS256G3AMNB-220` SSD) with a GPT partition table and the partitions described above.
    When finished the drive's partition table should look like this:
@@ -222,6 +225,6 @@ TODO:
      $ sudo cryptsetup luksDump /dev/sda2
      TODO
      $ sudo zpool list -v
-     TODO 
+     TODO
      ```
 4) Finally, let's mount in the filesystems the way they'll be used by the new system and let's copy over the keys.
