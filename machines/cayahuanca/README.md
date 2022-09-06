@@ -856,3 +856,180 @@ re-enable secure boot
 
 ZFS todo:
   - elevator none in the kernel for scheduling since we're not the only partition on the disk
+
+
+TODO:
+  - inline headphone media controls support
+    + As per the [product specification PDF](https://psref.lenovo.com/syspool/Sys/PDF/ThinkPad/ThinkPad_T15_Gen_1/ThinkPad_T15_Gen_1_Spec.PDF), this machine has a Realtek ALC3287 codec
+    + There is no datasheet available for this codec and Realtek does not acknowledge this chip's existence on its website
+    + TODO: add `i2c-dev` to kernel modules and poke around
+    + `cat /proc/asound/card0/codec#0` says we're using the driver for the Realtek ALC257
+      * which comes from [this file](https://github.com/torvalds/linux/blob/2880e1a175b9f31798f9d9482ee49187f61b5539/sound/pci/hda/patch_realtek.c)
+    + links:
+      * HDA overview: https://wiki.osdev.org/Intel_High_Definition_Audio
+      * HDA spec: https://www.intel.com/content/dam/www/public/us/en/documents/product-specifications/high-definition-audio-specification.pdf
+      * https://www.kernel.org/doc/html/latest/sound/hd-audio/notes.html
+      * `hda-verb`: https://www.kernel.org/doc/html/latest/sound/hd-audio/notes.html#hda-verb
+        - `sudo hda-verb /dev/snd/hwC0D0 0x00 PARAMETERS VENDOR_ID` yields `0x10ec0257` which matches the patch vendor id/device ID for ALC257 [here](https://github.com/torvalds/linux/blob/2880e1a175b9f31798f9d9482ee49187f61b5539/sound/pci/hda/patch_realtek.c#L11768)
+    + start by just sweeping the verbs and parameters:
+      * `for v in {2000..4095}; do for p in {0..256}; do sudo hda-verb /dev/snd/hwC0D0 0x00 $v $p; done; done`
+        - way too slow
+      * write a quick C program [based on `hda-verb`](https://github.com/alsa-project/alsa-tools/blob/78e579b3e30076be9e69c410434621b205318dfb/hda-verb/hda-verb.c#L340-L341):
+        ```c
+        #include <stdio.h>
+        #include <stdlib.h>
+        #include <string.h>
+        #include <ctype.h>
+        #include <unistd.h>
+        #include <sys/ioctl.h>
+        #include <sys/types.h>
+        #include <sys/fcntl.h>
+
+        #include <stdint.h>
+        typedef uint8_t u8;
+        typedef uint16_t u16;
+        typedef uint32_t u32;
+
+        // From: https://github.com/alsa-project/alsa-tools/blob/master/hda-verb/hda_hwdep.h
+        #define HDA_HWDEP_VERSION	((1 << 16) | (0 << 8) | (0 << 0)) /* 1.0.0 */
+
+        struct hda_verb_ioctl {
+          u32 verb;	/* HDA_VERB() */
+          u32 res;	/* response */
+        };
+
+        static inline u32 hda_verb(u8 node_id, u16 verb, u8 param) {
+            return (((u32)node_id) << 24) | (((u32)verb) << 8) | ((u32)param);
+        }
+
+        #define HDA_IOCTL_PVERSION       _IOR('H', 0x10, int)
+        #define HDA_IOCTL_VERB_WRITE    _IOWR('H', 0x11, struct hda_verb_ioctl)
+        #define HDA_IOCTL_GET_WCAP      _IOWR('H', 0x12, struct hda_verb_ioctl)
+
+        int main(int argc, const char** argv) {
+            u8 node_id = 0;
+            if (argc == 2) {
+                node_id = strtol(argv[1], NULL, 0);
+            }
+
+            const char* dev = "/dev/snd/hwC0D0";
+            const u16 verb_start = 0x800; // 0x0;
+            const u16 verb_limit = 0xFFF;
+            const u8 param_start = 0;
+            const u8 param_limit = 0xFE;
+            fprintf(
+                stderr,
+                "Sweeping `%s` node %d: verbs: { 0x%03X...0x%03X } x params: { 0x%02X...0x%02X }\n",
+                dev,
+                node_id,
+                verb_start, verb_limit,
+                param_start, param_limit
+            );
+
+            /* Open device. */
+            int fd = open(dev, O_RDWR);
+          if (fd < 0) {
+            perror("open");
+            return 1;
+          }
+
+            /* Check version. */
+            int version = 0;
+          if (ioctl(fd, HDA_IOCTL_PVERSION, &version) < 0) {
+            perror("ioctl(PVERSION)");
+            fprintf(stderr, "Looks like an invalid hwdep device...\n");
+            return 1;
+          }
+          if (version < HDA_HWDEP_VERSION) {
+            fprintf(stderr, "Invalid version number 0x%x\n", version);
+            fprintf(stderr, "Looks like an invalid hwdep device...\n");
+            return 1;
+          }
+
+
+            /* Sweep */
+            struct hda_verb_ioctl val;
+            for (u16 verb = verb_start; verb <= verb_limit; verb++) {
+                for (u8 param = param_start; param <= param_limit; param++) {
+                    val.verb = hda_verb(node_id, verb, param);
+
+                    if (ioctl(fd, HDA_IOCTL_VERB_WRITE, &val) < 0) {
+                        perror("ioctl");
+                        return 2;
+                    }
+                    if (val.res == 0) { continue; }
+                    printf("[0x%03X 0x%02X] = 0x%x\n", verb, param, val.res);
+                }
+
+                if (!(verb % 0x100)) fprintf(stderr, "0x%03X...\n", verb);
+            }
+
+            close(fd);
+        }
+
+        // `for i in {0..50}; do sudo ./a.out $i > a/$(printf "%02d" $i).log; done`
+        // Table 141 of the spec is also useful
+        ```
+        - I think the bash version isn't actually that slow; it's just that verb 0 has long response times (and also puts the codec in a weird state where it starts responding to everything with `0xFFFF`?)
+          + putting the machine to sleep and waking it up seems to reset the codec and break it out of this state
+        - you can heard the codec going to sleep/waking up based on whether you can hear a faint hiss in your headphones (doesn't seem to affect the speed since the timeout to sleep seems to be ~1s but if you play music while running the above the codec will stay awake)
+
+    https://bbs.archlinux.org/viewtopic.php?id=231478
+    lots of ppl asking this Q, no answers though
+
+    some codecs with support in the linux kernel clearly support headphone button presses: https://github.com/torvalds/linux/blob/master/sound/soc/codecs/nau8825.c
+    but no HDA codecs, it seems: https://cs.github.com/torvalds/linux?q=SND_JACK_BTN_0 https://cs.github.com/torvalds/linux?q=snd_jack_set_key https://cs.github.com/torvalds/linux?q=snd_jack+path%3A%2F%5Esound%5C%2Fpci%5C%2Fhda%2F
+
+
+    `sudo hda-verb /dev/snd/hwC0D0 0x19 0xF09 0` is headphone mic detection (0x8000000 when plugged in, 0 otherwise), `0x21` is headphone out detection
+
+    trying the obvious interfaces (GPIO, GPI registers) did not yield anything either (GPIO enable and data do work and do seem to indicate that there are three GPIO pins but reading them doesn't yield anything useful; pins 0 and 1 seem to be stuck high and none of the pins seem to change in reponse to any stimulus)
+
+    diffing the register dumps of the first 40 node ids (the entire "get" verb, all parameters space) with the buttons pressed/not pressed yields nothing also (was hoping that some of the "vendor defined widget" nodes might've had the goods)
+
+    haven't been able to find any Intel HDA codecs supported by the kernel and/or with public datasheets that have support for or hint at the interface for inline headphone buttons
+      - ChromeOS and android devices both definitely have support for these but they both seem to use "soc" codecs instead of intel HDA codecs
+        + as far as I can tell there is no overlap between these kinds of codecs
+        + there _are_ chromeOS laptops that ship Intel processors and thus _probably_ use Intel HDA (and probably support inline headphone buttons?) but: a quick glance through the commits on `sound/pci/hda` in the chrome os kernel fork revealed nothing relevant: https://chromium.googlesource.com/chromiumos/third_party/kernel/+log/refs/heads/chromeos-5.4/sound/pci/hda?s=5f68b0ec9882112864b05cab49c72d6cb7745f35
+
+    hmm: https://patchwork.kernel.org/project/alsa-devel/patch/20190220115732.16216-2-tiwai@suse.de/
+    hmmmmm: https://patchwork.kernel.org/project/alsa-devel/patch/20210305092608.109599-1-hui.wang@canonical.com/
+
+    given that I haven't been able to find prior art and I haven't been able to stumble into the interface by probing the registers, I think this means we'll need to do some reverse engineering
+
+    doing things at the hardware level seems impractical:
+      - I don't know of any economical and unintrusive ways to introspect PCI traffic (which we'd need to do for HDA)
+      - and I don't have the tools to prod at pins on the actual codec chip and collect traffic that way (and I don't really feel comfortable doing this on this device anyways given that we'd need to do some experimentation to figure out the pinout of the chip)
+
+    static reverse engineering of the driver is an option but:
+      - I don't have enough reverse engineering experience (and enough of an understanding of Windows drivers) for this to be practical
+      - the realtek windows audio codec driver blob is ~90MB
+
+    quick searches didn't manage to dig up any kind of documentation for windows HDA/codec drivers and I wasn't able to find any obvious ways that windows offers to hook onto such drivers for debugging
+
+    so, I think that leaves virtualization
+      - we can run windows in a VM, with the realtek drivers
+      - and expose a "fake" Intel HDA controller with our codec
+        + either proxied to the real codec chip or backed by a software facsimile
+    this will let us capture full traces of the commands the windows driver issues to the codec
+
+    I think this isn't _too_ hard to do with QEMU
+      - it supports [windows guests (with audio support)](https://wiki.gentoo.org/wiki/QEMU/Windows_guest)
+      - and has an [Intel HDA device](https://github.com/qemu/qemu/blob/afdb415e67e13e8726edc21238c9883447b2c704/hw/audio/intel-hda.c) and a [codec device](https://github.com/qemu/qemu/blob/266469947161aa10b1d36843580d369d5aa38589/hw/audio/hda-codec.c) (also [here](https://github.com/qemu/qemu/blob/266469947161aa10b1d36843580d369d5aa38589/hw/audio/hda-codec-common.h)) which we can modify
+      - there's definitely [precedent](https://www.apriorit.com/dev-blog/589-develop-windows-driver-using-qemu)
+      - and passing through the entire PCI device and tracing I/O accesses is also [an option](https://digriz.org.uk/tutorials/reversing-pci-drivers) (more [here](https://hakzsam.wordpress.com/2015/02/21/471/))
+      - actually [this repo](https://github.com/Conmanx360/QemuHDADump) describes [how to do this](https://github.com/Conmanx360/QemuHDADump/wiki/Setup-and-usage-of-the-program) specifically for HDA sound cards and codecs and has tooling that goes and parses the actual HDA gets and sets
+
+system debugging packages:
+  - dmidecode
+  - `i2c-dev` to kernel modules
+  - lsusb, lspci
+  - i2c-tools
+  - aplay?
+  - libinput
+  - alsa-tools (hda-verb)
+
+bp:
+  - ALC3287 inline mic controls
+  - TI USB ICDI?
+  - RE Intel DMC
