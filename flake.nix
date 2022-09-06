@@ -34,6 +34,9 @@
 
   outputs = flakeInputs@{ self, nixpkgs, darwin, home-manager, flu, ... }: let
     dir = import ./util/list-dir.nix { lib = nixpkgs.lib; };
+    util = dir { of = ./util; mapFunc = _: import; };
+    inputs = flakeInputs // { inherit util; };
+
     conditionallyProvideInputs = func: inputs:
       if builtins.isFunction func && (builtins.functionArgs func) != {} then
         func inputs
@@ -139,7 +142,7 @@
       }; }
 
       /* lib */
-      { lib = dir { of = ./util; }; }
+      { lib = { inherit util; }; }
 
       # TODO: templates
     ];
