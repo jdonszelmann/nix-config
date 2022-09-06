@@ -3,6 +3,15 @@ https://en.wikipedia.org/wiki/HD_52265_b
 <!-- "the rock looking at the stars" -->
 <!-- commit tag: caya -->
 
+## Machine Info
+
+Model Number: 20S7S
+
+[Product Specifications (PDF)](https://psref.lenovo.com/syspool/Sys/PDF/ThinkPad/ThinkPad_T15_Gen_1/ThinkPad_T15_Gen_1_Spec.PDF)
+
+[Hardware Maintainence Manual (PDF)](https://download.lenovo.com/pccbbs/mobiles_pdf/p15_t15g_gen1_hmm_en.pdf)
+
+
 TODOs:
   - `psmouse.synaptics_intertouch=0` for T15: https://superuser.com/questions/1649041/thinkpad-t15-clickpad-button-not-working-in-linux
     + add to nixos hardware repo!
