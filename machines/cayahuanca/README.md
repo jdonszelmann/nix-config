@@ -288,62 +288,56 @@ TODO: diagram
         -O xattr=sa
       )
 
+      # Temporarily copy the key to `/etc/secrets/root.key`:
+      sudo mkdir -p /etc/secrets
+      sudo cp ./root.key /etc/secrets/root.key
+
       # Create a pool named `x` on `/dev/nvme0n1p6` with the options above:
       sudo zpool create "${args[@]}" x /dev/nvme0n1p6
+
+      # Delete the key:
+      sudo rm -rf /etc/secrets/root.key
 
       # Create the top-level datasets (but don't mount: -u):
       #
       # A grahamc inspired arrangement, see: https://grahamc.com/blog/nixos-on-zfs
+      # And: https://grahamc.com/blog/erase-your-darlings
       ephem_ds_args=(
         # Just a container, don't mount.
         -o mountpoint=none
-
-        # Disable snapshots.
-        -o snapshot_limit=0
 
         x/ephemeral
       )
       sudo zfs create -v -u "${ephem_ds_args[@]}"
 
-      sys_ds_args=(
-        # Just a container, don't mount.
-        -o mountpoint=none
+      pers_ds_args=(
+        -o mountpoint=/persistent
 
-        # Periodic snapshots, short retention.
-        # TODO
-
-        # So that things like journalctl work, enable posix acls:
-        -o acltype=posixacl
-
-        x/system
+        x/persistent
       )
-      sudo zfs create -v -u "${sys_ds_args[@]}"
-
-      user_ds_args=(
-        # Just a container, don't mount.
-        -o mountpoint=none
-
-        # Regular snapshots, long retention.
-        # TODO
-
-        x/user
-      )
-      sudo zfs create -v -u "${user_ds_args[@]}"
+      sudo zfs create -v -u "${pers_ds_args[@]}"
 
       # Create the datasets to actually mount:
-      # `/nix`:
-      sudo zfs create -v -u -o mountpoint=/nix x/ephemeral/nix
-        # disable dedupe:
-        sudo zfs set dedup=off x/ephemeral/nix
-        # use fletcher4? TODO, not sure
-
-      # `/root`:
-      sudo zfs create -v -u -o mountpoint=/    x/system/root
 
       # `/`:
-      sudo zfs create -v -u -o mountpoint=/home x/user/home
-      sudo zfs create -v -u                     x/user/home/rahul
-      sudo zfs create -v -u                     x/user/home/rahul/dev
+      sudo zfs create -v -u -o mountpoint=/ x/ephemeral/root
+      # so that things like journalctl work, enable posix acls:
+      sudo zfs set acltype=posixacl x/ephemeral/root
+      # while it's still pristine:
+      sudo zfs snapshot x/ephemeral/root@blank
+
+      # `/nix`:
+      sudo zfs create -v -u -o mountpoint=/nix x/ephemeral/nix
+      # disable dedupe:
+      sudo zfs set dedup=off x/ephemeral/nix
+      # disable snapshots:
+      sudo zfs set snapshot_limit=0 x/ephemeral/nix
+      # use fletcher4? TODO, not sure
+
+      # `/persistent/...`:
+      sudo zfs create -v -u x/persistent/home
+      sudo zfs create -v -u x/persistent/home/rahul
+      sudo zfs create -v -u x/persistent/home/rahul/dev
       # TODO: hide the .zfs dir on sub-datasets?
 
       # TODO:
@@ -437,396 +431,393 @@ TODO: diagram
       sudo zfs load-key -L file://$(realpath ./root.key) x && \
       sudo zpool list -v && \
       sudo zfs list && \
-      sudo zfs get all x x/{ephemeral{,/nix},system,user} && \
+      sudo zfs get all x x/{ephemeral{,/nix,/root},persistent} && \
       sudo zpool export x
     ```
     <details>
 
     ```
-    NAME          SIZE  ALLOC   FREE  CKPOINT  EXPANDSZ   FRAG    CAP  DEDUP    HEALTH  ALTROOT
-    x             127G  1.45M   127G        -         -     0%     0%  1.00x    ONLINE  -
-      nvme0n1p6   127G  1.45M   127G        -         -     0%  0.00%      -    ONLINE
-    NAME                    USED  AVAIL     REFER  MOUNTPOINT
-    x                      1.39M   123G       98K  none
-    x/ephemeral             196K   123G       98K  none
-    x/ephemeral/nix          98K   123G       98K  /nix
-    x/system                198K   123G       98K  none
-    x/system/root           100K   123G      100K  /
-    x/user                  394K   123G       98K  none
-    x/user/home             296K   123G       99K  /home
-    x/user/home/rahul       197K   123G       99K  /home/rahul
-    x/user/home/rahul/dev    98K   123G       98K  /home/rahul/dev
-    NAME             PROPERTY              VALUE                         SOURCE
-    x                type                  filesystem                    -
-    x                creation              Sat Sep  3 19:39 2022         -
-    x                used                  1.39M                         -
-    x                available             123G                          -
-    x                referenced            98K                           -
-    x                compressratio         1.00x                         -
-    x                mounted               no                            -
-    x                quota                 none                          default
-    x                reservation           none                          default
-    x                recordsize            128K                          default
-    x                mountpoint            none                          local
-    x                sharenfs              off                           default
-    x                checksum              on                            local
-    x                compression           zstd-2                        local
-    x                atime                 off                           local
-    x                devices               on                            default
-    x                exec                  on                            default
-    x                setuid                on                            default
-    x                readonly              off                           default
-    x                zoned                 off                           default
-    x                snapdir               visible                       local
-    x                aclmode               discard                       default
-    x                aclinherit            restricted                    default
-    x                createtxg             1                             -
-    x                canmount              on                            default
-    x                xattr                 sa                            local
-    x                copies                1                             default
-    x                version               5                             -
-    x                utf8only              off                           -
-    x                normalization         none                          -
-    x                casesensitivity       sensitive                     -
-    x                vscan                 off                           default
-    x                nbmand                off                           default
-    x                sharesmb              off                           default
-    x                refquota              none                          default
-    x                refreservation        none                          default
-    x                guid                  15623246681462713644          -
-    x                primarycache          all                           default
-    x                secondarycache        all                           default
-    x                usedbysnapshots       0B                            -
-    x                usedbydataset         98K                           -
-    x                usedbychildren        1.29M                         -
-    x                usedbyrefreservation  0B                            -
-    x                logbias               latency                       default
-    x                objsetid              54                            -
-    x                dedup                 edonr,verify                  local
-    x                mlslabel              none                          default
-    x                sync                  standard                      default
-    x                dnodesize             legacy                        default
-    x                refcompressratio      1.00x                         -
-    x                written               98K                           -
-    x                logicalused           622K                          -
-    x                logicalreferenced     49K                           -
-    x                volmode               default                       default
-    x                filesystem_limit      none                          default
-    x                snapshot_limit        200                           local
-    x                filesystem_count      8                             local
-    x                snapshot_count        0                             local
-    x                snapdev               hidden                        default
-    x                acltype               off                           default
-    x                context               none                          default
-    x                fscontext             none                          default
-    x                defcontext            none                          default
-    x                rootcontext           none                          default
-    x                relatime              off                           default
-    x                redundant_metadata    most                          local
-    x                overlay               on                            default
-    x                encryption            aes-256-gcm                   -
-    x                keylocation           file:///etc/secrets/root.key  local
-    x                keyformat             passphrase                    -
-    x                pbkdf2iters           350000                        -
-    x                encryptionroot        x                             -
-    x                keystatus             available                     -
-    x                special_small_blocks  0                             default
-    x/ephemeral      type                  filesystem                    -
-    x/ephemeral      creation              Sat Sep  3 19:39 2022         -
-    x/ephemeral      used                  196K                          -
-    x/ephemeral      available             123G                          -
-    x/ephemeral      referenced            98K                           -
-    x/ephemeral      compressratio         1.00x                         -
-    x/ephemeral      mounted               no                            -
-    x/ephemeral      quota                 none                          default
-    x/ephemeral      reservation           none                          default
-    x/ephemeral      recordsize            128K                          default
-    x/ephemeral      mountpoint            none                          local
-    x/ephemeral      sharenfs              off                           default
-    x/ephemeral      checksum              on                            inherited from x
-    x/ephemeral      compression           zstd-2                        inherited from x
-    x/ephemeral      atime                 off                           inherited from x
-    x/ephemeral      devices               on                            default
-    x/ephemeral      exec                  on                            default
-    x/ephemeral      setuid                on                            default
-    x/ephemeral      readonly              off                           default
-    x/ephemeral      zoned                 off                           default
-    x/ephemeral      snapdir               visible                       inherited from x
-    x/ephemeral      aclmode               discard                       default
-    x/ephemeral      aclinherit            restricted                    default
-    x/ephemeral      createtxg             16                            -
-    x/ephemeral      canmount              on                            default
-    x/ephemeral      xattr                 sa                            inherited from x
-    x/ephemeral      copies                1                             default
-    x/ephemeral      version               5                             -
-    x/ephemeral      utf8only              off                           -
-    x/ephemeral      normalization         none                          -
-    x/ephemeral      casesensitivity       sensitive                     -
-    x/ephemeral      vscan                 off                           default
-    x/ephemeral      nbmand                off                           default
-    x/ephemeral      sharesmb              off                           default
-    x/ephemeral      refquota              none                          default
-    x/ephemeral      refreservation        none                          default
-    x/ephemeral      guid                  8192812067371941682           -
-    x/ephemeral      primarycache          all                           default
-    x/ephemeral      secondarycache        all                           default
-    x/ephemeral      usedbysnapshots       0B                            -
-    x/ephemeral      usedbydataset         98K                           -
-    x/ephemeral      usedbychildren        98K                           -
-    x/ephemeral      usedbyrefreservation  0B                            -
-    x/ephemeral      logbias               latency                       default
-    x/ephemeral      objsetid              643                           -
-    x/ephemeral      dedup                 edonr,verify                  inherited from x
-    x/ephemeral      mlslabel              none                          default
-    x/ephemeral      sync                  standard                      default
-    x/ephemeral      dnodesize             legacy                        default
-    x/ephemeral      refcompressratio      1.00x                         -
-    x/ephemeral      written               98K                           -
-    x/ephemeral      logicalused           98K                           -
-    x/ephemeral      logicalreferenced     49K                           -
-    x/ephemeral      volmode               default                       default
-    x/ephemeral      filesystem_limit      none                          default
-    x/ephemeral      snapshot_limit        0                             local
-    x/ephemeral      filesystem_count      1                             local
-    x/ephemeral      snapshot_count        0                             local
-    x/ephemeral      snapdev               hidden                        default
-    x/ephemeral      acltype               off                           default
-    x/ephemeral      context               none                          default
-    x/ephemeral      fscontext             none                          default
-    x/ephemeral      defcontext            none                          default
-    x/ephemeral      rootcontext           none                          default
-    x/ephemeral      relatime              off                           default
-    x/ephemeral      redundant_metadata    most                          inherited from x
-    x/ephemeral      overlay               on                            default
-    x/ephemeral      encryption            aes-256-gcm                   -
-    x/ephemeral      keylocation           none                          default
-    x/ephemeral      keyformat             passphrase                    -
-    x/ephemeral      pbkdf2iters           350000                        -
-    x/ephemeral      encryptionroot        x                             -
-    x/ephemeral      keystatus             available                     -
-    x/ephemeral      special_small_blocks  0                             default
-    x/ephemeral/nix  type                  filesystem                    -
-    x/ephemeral/nix  creation              Sat Sep  3 19:40 2022         -
-    x/ephemeral/nix  used                  98K                           -
-    x/ephemeral/nix  available             123G                          -
-    x/ephemeral/nix  referenced            98K                           -
-    x/ephemeral/nix  compressratio         1.00x                         -
-    x/ephemeral/nix  mounted               no                            -
-    x/ephemeral/nix  quota                 none                          default
-    x/ephemeral/nix  reservation           none                          default
-    x/ephemeral/nix  recordsize            128K                          default
-    x/ephemeral/nix  mountpoint            /nix                          local
-    x/ephemeral/nix  sharenfs              off                           default
-    x/ephemeral/nix  checksum              on                            inherited from x
-    x/ephemeral/nix  compression           zstd-2                        inherited from x
-    x/ephemeral/nix  atime                 off                           inherited from x
-    x/ephemeral/nix  devices               on                            default
-    x/ephemeral/nix  exec                  on                            default
-    x/ephemeral/nix  setuid                on                            default
-    x/ephemeral/nix  readonly              off                           default
-    x/ephemeral/nix  zoned                 off                           default
-    x/ephemeral/nix  snapdir               visible                       inherited from x
-    x/ephemeral/nix  aclmode               discard                       default
-    x/ephemeral/nix  aclinherit            restricted                    default
-    x/ephemeral/nix  createtxg             34                            -
-    x/ephemeral/nix  canmount              on                            default
-    x/ephemeral/nix  xattr                 sa                            inherited from x
-    x/ephemeral/nix  copies                1                             default
-    x/ephemeral/nix  version               5                             -
-    x/ephemeral/nix  utf8only              off                           -
-    x/ephemeral/nix  normalization         none                          -
-    x/ephemeral/nix  casesensitivity       sensitive                     -
-    x/ephemeral/nix  vscan                 off                           default
-    x/ephemeral/nix  nbmand                off                           default
-    x/ephemeral/nix  sharesmb              off                           default
-    x/ephemeral/nix  refquota              none                          default
-    x/ephemeral/nix  refreservation        none                          default
-    x/ephemeral/nix  guid                  15013377728916524076          -
-    x/ephemeral/nix  primarycache          all                           default
-    x/ephemeral/nix  secondarycache        all                           default
-    x/ephemeral/nix  usedbysnapshots       0B                            -
-    x/ephemeral/nix  usedbydataset         98K                           -
-    x/ephemeral/nix  usedbychildren        0B                            -
-    x/ephemeral/nix  usedbyrefreservation  0B                            -
-    x/ephemeral/nix  logbias               latency                       default
-    x/ephemeral/nix  objsetid              772                           -
-    x/ephemeral/nix  dedup                 off                           local
-    x/ephemeral/nix  mlslabel              none                          default
-    x/ephemeral/nix  sync                  standard                      default
-    x/ephemeral/nix  dnodesize             legacy                        default
-    x/ephemeral/nix  refcompressratio      1.00x                         -
-    x/ephemeral/nix  written               98K                           -
-    x/ephemeral/nix  logicalused           49K                           -
-    x/ephemeral/nix  logicalreferenced     49K                           -
-    x/ephemeral/nix  volmode               default                       default
-    x/ephemeral/nix  filesystem_limit      none                          default
-    x/ephemeral/nix  snapshot_limit        none                          default
-    x/ephemeral/nix  filesystem_count      0                             local
-    x/ephemeral/nix  snapshot_count        0                             local
-    x/ephemeral/nix  snapdev               hidden                        default
-    x/ephemeral/nix  acltype               off                           default
-    x/ephemeral/nix  context               none                          default
-    x/ephemeral/nix  fscontext             none                          default
-    x/ephemeral/nix  defcontext            none                          default
-    x/ephemeral/nix  rootcontext           none                          default
-    x/ephemeral/nix  relatime              off                           default
-    x/ephemeral/nix  redundant_metadata    most                          inherited from x
-    x/ephemeral/nix  overlay               on                            default
-    x/ephemeral/nix  encryption            aes-256-gcm                   -
-    x/ephemeral/nix  keylocation           none                          default
-    x/ephemeral/nix  keyformat             passphrase                    -
-    x/ephemeral/nix  pbkdf2iters           350000                        -
-    x/ephemeral/nix  encryptionroot        x                             -
-    x/ephemeral/nix  keystatus             available                     -
-    x/ephemeral/nix  special_small_blocks  0                             default
-    x/system         type                  filesystem                    -
-    x/system         creation              Sat Sep  3 19:40 2022         -
-    x/system         used                  198K                          -
-    x/system         available             123G                          -
-    x/system         referenced            98K                           -
-    x/system         compressratio         1.00x                         -
-    x/system         mounted               no                            -
-    x/system         quota                 none                          default
-    x/system         reservation           none                          default
-    x/system         recordsize            128K                          default
-    x/system         mountpoint            none                          local
-    x/system         sharenfs              off                           default
-    x/system         checksum              on                            inherited from x
-    x/system         compression           zstd-2                        inherited from x
-    x/system         atime                 off                           inherited from x
-    x/system         devices               on                            default
-    x/system         exec                  on                            default
-    x/system         setuid                on                            default
-    x/system         readonly              off                           default
-    x/system         zoned                 off                           default
-    x/system         snapdir               visible                       inherited from x
-    x/system         aclmode               discard                       default
-    x/system         aclinherit            restricted                    default
-    x/system         createtxg             23                            -
-    x/system         canmount              on                            default
-    x/system         xattr                 sa                            inherited from x
-    x/system         copies                1                             default
-    x/system         version               5                             -
-    x/system         utf8only              off                           -
-    x/system         normalization         none                          -
-    x/system         casesensitivity       sensitive                     -
-    x/system         vscan                 off                           default
-    x/system         nbmand                off                           default
-    x/system         sharesmb              off                           default
-    x/system         refquota              none                          default
-    x/system         refreservation        none                          default
-    x/system         guid                  11008858716627305608          -
-    x/system         primarycache          all                           default
-    x/system         secondarycache        all                           default
-    x/system         usedbysnapshots       0B                            -
-    x/system         usedbydataset         98K                           -
-    x/system         usedbychildren        100K                          -
-    x/system         usedbyrefreservation  0B                            -
-    x/system         logbias               latency                       default
-    x/system         objsetid              517                           -
-    x/system         dedup                 edonr,verify                  inherited from x
-    x/system         mlslabel              none                          default
-    x/system         sync                  standard                      default
-    x/system         dnodesize             legacy                        default
-    x/system         refcompressratio      1.00x                         -
-    x/system         written               98K                           -
-    x/system         logicalused           99K                           -
-    x/system         logicalreferenced     49K                           -
-    x/system         volmode               default                       default
-    x/system         filesystem_limit      none                          default
-    x/system         snapshot_limit        none                          default
-    x/system         filesystem_count      1                             local
-    x/system         snapshot_count        0                             local
-    x/system         snapdev               hidden                        default
-    x/system         acltype               posix                         local
-    x/system         context               none                          default
-    x/system         fscontext             none                          default
-    x/system         defcontext            none                          default
-    x/system         rootcontext           none                          default
-    x/system         relatime              off                           default
-    x/system         redundant_metadata    most                          inherited from x
-    x/system         overlay               on                            default
-    x/system         encryption            aes-256-gcm                   -
-    x/system         keylocation           none                          default
-    x/system         keyformat             passphrase                    -
-    x/system         pbkdf2iters           350000                        -
-    x/system         encryptionroot        x                             -
-    x/system         keystatus             available                     -
-    x/system         special_small_blocks  0                             default
-    x/user           type                  filesystem                    -
-    x/user           creation              Sat Sep  3 19:40 2022         -
-    x/user           used                  394K                          -
-    x/user           available             123G                          -
-    x/user           referenced            98K                           -
-    x/user           compressratio         1.00x                         -
-    x/user           mounted               no                            -
-    x/user           quota                 none                          default
-    x/user           reservation           none                          default
-    x/user           recordsize            128K                          default
-    x/user           mountpoint            none                          local
-    x/user           sharenfs              off                           default
-    x/user           checksum              on                            inherited from x
-    x/user           compression           zstd-2                        inherited from x
-    x/user           atime                 off                           inherited from x
-    x/user           devices               on                            default
-    x/user           exec                  on                            default
-    x/user           setuid                on                            default
-    x/user           readonly              off                           default
-    x/user           zoned                 off                           default
-    x/user           snapdir               visible                       inherited from x
-    x/user           aclmode               discard                       default
-    x/user           aclinherit            restricted                    default
-    x/user           createtxg             27                            -
-    x/user           canmount              on                            default
-    x/user           xattr                 sa                            inherited from x
-    x/user           copies                1                             default
-    x/user           version               5                             -
-    x/user           utf8only              off                           -
-    x/user           normalization         none                          -
-    x/user           casesensitivity       sensitive                     -
-    x/user           vscan                 off                           default
-    x/user           nbmand                off                           default
-    x/user           sharesmb              off                           default
-    x/user           refquota              none                          default
-    x/user           refreservation        none                          default
-    x/user           guid                  782021205668420263            -
-    x/user           primarycache          all                           default
-    x/user           secondarycache        all                           default
-    x/user           usedbysnapshots       0B                            -
-    x/user           usedbydataset         98K                           -
-    x/user           usedbychildren        296K                          -
-    x/user           usedbyrefreservation  0B                            -
-    x/user           logbias               latency                       default
-    x/user           objsetid              69                            -
-    x/user           dedup                 edonr,verify                  inherited from x
-    x/user           mlslabel              none                          default
-    x/user           sync                  standard                      default
-    x/user           dnodesize             legacy                        default
-    x/user           refcompressratio      1.00x                         -
-    x/user           written               98K                           -
-    x/user           logicalused           197K                          -
-    x/user           logicalreferenced     49K                           -
-    x/user           volmode               default                       default
-    x/user           filesystem_limit      none                          default
-    x/user           snapshot_limit        none                          default
-    x/user           filesystem_count      3                             local
-    x/user           snapshot_count        0                             local
-    x/user           snapdev               hidden                        default
-    x/user           acltype               off                           default
-    x/user           context               none                          default
-    x/user           fscontext             none                          default
-    x/user           defcontext            none                          default
-    x/user           rootcontext           none                          default
-    x/user           relatime              off                           default
-    x/user           redundant_metadata    most                          inherited from x
-    x/user           overlay               on                            default
-    x/user           encryption            aes-256-gcm                   -
-    x/user           keylocation           none                          default
-    x/user           keyformat             passphrase                    -
-    x/user           pbkdf2iters           350000                        -
-    x/user           encryptionroot        x                             -
-    x/user           keystatus             available                     -
-    x/user           special_small_blocks  0                             default
+    NAME                          USED  AVAIL     REFER  MOUNTPOINT
+    x                            1.15M   123G       98K  none
+    x/ephemeral                   294K   123G       98K  none
+    x/ephemeral/nix                98K   123G       98K  /nix
+    x/ephemeral/root               98K   123G       98K  /
+    x/ephemeral/root@blank          0B      -       98K  -
+    x/persistent                  392K   123G       98K  /persistent
+    x/persistent/home             294K   123G       98K  /persistent/home
+    x/persistent/home/rahul       196K   123G       98K  /persistent/home/rahul
+    x/persistent/home/rahul/dev    98K   123G       98K  /persistent/home/rahul/dev
+    NAME              PROPERTY              VALUE                         SOURCE
+    x                 type                  filesystem                    -
+    x                 creation              Wed Sep  7  5:29 2022         -
+    x                 used                  1.15M                         -
+    x                 available             123G                          -
+    x                 referenced            98K                           -
+    x                 compressratio         1.00x                         -
+    x                 mounted               no                            -
+    x                 quota                 none                          default
+    x                 reservation           none                          default
+    x                 recordsize            128K                          default
+    x                 mountpoint            none                          local
+    x                 sharenfs              off                           default
+    x                 checksum              on                            local
+    x                 compression           zstd-2                        local
+    x                 atime                 off                           local
+    x                 devices               on                            default
+    x                 exec                  on                            default
+    x                 setuid                on                            default
+    x                 readonly              off                           default
+    x                 zoned                 off                           default
+    x                 snapdir               visible                       local
+    x                 aclmode               discard                       default
+    x                 aclinherit            restricted                    default
+    x                 createtxg             1                             -
+    x                 canmount              on                            default
+    x                 xattr                 sa                            local
+    x                 copies                1                             default
+    x                 version               5                             -
+    x                 utf8only              off                           -
+    x                 normalization         none                          -
+    x                 casesensitivity       sensitive                     -
+    x                 vscan                 off                           default
+    x                 nbmand                off                           default
+    x                 sharesmb              off                           default
+    x                 refquota              none                          default
+    x                 refreservation        none                          default
+    x                 guid                  8985929508170989259           -
+    x                 primarycache          all                           default
+    x                 secondarycache        all                           default
+    x                 usedbysnapshots       0B                            -
+    x                 usedbydataset         98K                           -
+    x                 usedbychildren        1.05M                         -
+    x                 usedbyrefreservation  0B                            -
+    x                 logbias               latency                       default
+    x                 objsetid              54                            -
+    x                 dedup                 edonr,verify                  local
+    x                 mlslabel              none                          default
+    x                 sync                  standard                      default
+    x                 dnodesize             legacy                        default
+    x                 refcompressratio      1.00x                         -
+    x                 written               98K                           -
+    x                 logicalused           522K                          -
+    x                 logicalreferenced     49K                           -
+    x                 volmode               default                       default
+    x                 filesystem_limit      none                          default
+    x                 snapshot_limit        200                           local
+    x                 filesystem_count      7                             local
+    x                 snapshot_count        1                             local
+    x                 snapdev               hidden                        default
+    x                 acltype               off                           default
+    x                 context               none                          default
+    x                 fscontext             none                          default
+    x                 defcontext            none                          default
+    x                 rootcontext           none                          default
+    x                 relatime              off                           default
+    x                 redundant_metadata    most                          local
+    x                 overlay               on                            default
+    x                 encryption            aes-256-gcm                   -
+    x                 keylocation           file:///etc/secrets/root.key  local
+    x                 keyformat             passphrase                    -
+    x                 pbkdf2iters           350000                        -
+    x                 encryptionroot        x                             -
+    x                 keystatus             available                     -
+    x                 special_small_blocks  0                             default
+    x/ephemeral       type                  filesystem                    -
+    x/ephemeral       creation              Wed Sep  7  5:30 2022         -
+    x/ephemeral       used                  294K                          -
+    x/ephemeral       available             123G                          -
+    x/ephemeral       referenced            98K                           -
+    x/ephemeral       compressratio         1.00x                         -
+    x/ephemeral       mounted               no                            -
+    x/ephemeral       quota                 none                          default
+    x/ephemeral       reservation           none                          default
+    x/ephemeral       recordsize            128K                          default
+    x/ephemeral       mountpoint            none                          local
+    x/ephemeral       sharenfs              off                           default
+    x/ephemeral       checksum              on                            inherited from x
+    x/ephemeral       compression           zstd-2                        inherited from x
+    x/ephemeral       atime                 off                           inherited from x
+    x/ephemeral       devices               on                            default
+    x/ephemeral       exec                  on                            default
+    x/ephemeral       setuid                on                            default
+    x/ephemeral       readonly              off                           default
+    x/ephemeral       zoned                 off                           default
+    x/ephemeral       snapdir               visible                       inherited from x
+    x/ephemeral       aclmode               discard                       default
+    x/ephemeral       aclinherit            restricted                    default
+    x/ephemeral       createtxg             9                             -
+    x/ephemeral       canmount              on                            default
+    x/ephemeral       xattr                 sa                            inherited from x
+    x/ephemeral       copies                1                             default
+    x/ephemeral       version               5                             -
+    x/ephemeral       utf8only              off                           -
+    x/ephemeral       normalization         none                          -
+    x/ephemeral       casesensitivity       sensitive                     -
+    x/ephemeral       vscan                 off                           default
+    x/ephemeral       nbmand                off                           default
+    x/ephemeral       sharesmb              off                           default
+    x/ephemeral       refquota              none                          default
+    x/ephemeral       refreservation        none                          default
+    x/ephemeral       guid                  11171661559828390350          -
+    x/ephemeral       primarycache          all                           default
+    x/ephemeral       secondarycache        all                           default
+    x/ephemeral       usedbysnapshots       0B                            -
+    x/ephemeral       usedbydataset         98K                           -
+    x/ephemeral       usedbychildren        196K                          -
+    x/ephemeral       usedbyrefreservation  0B                            -
+    x/ephemeral       logbias               latency                       default
+    x/ephemeral       objsetid              389                           -
+    x/ephemeral       dedup                 edonr,verify                  inherited from x
+    x/ephemeral       mlslabel              none                          default
+    x/ephemeral       sync                  standard                      default
+    x/ephemeral       dnodesize             legacy                        default
+    x/ephemeral       refcompressratio      1.00x                         -
+    x/ephemeral       written               98K                           -
+    x/ephemeral       logicalused           147K                          -
+    x/ephemeral       logicalreferenced     49K                           -
+    x/ephemeral       volmode               default                       default
+    x/ephemeral       filesystem_limit      none                          default
+    x/ephemeral       snapshot_limit        none                          default
+    x/ephemeral       filesystem_count      2                             local
+    x/ephemeral       snapshot_count        1                             local
+    x/ephemeral       snapdev               hidden                        default
+    x/ephemeral       acltype               off                           default
+    x/ephemeral       context               none                          default
+    x/ephemeral       fscontext             none                          default
+    x/ephemeral       defcontext            none                          default
+    x/ephemeral       rootcontext           none                          default
+    x/ephemeral       relatime              off                           default
+    x/ephemeral       redundant_metadata    most                          inherited from x
+    x/ephemeral       overlay               on                            default
+    x/ephemeral       encryption            aes-256-gcm                   -
+    x/ephemeral       keylocation           none                          default
+    x/ephemeral       keyformat             passphrase                    -
+    x/ephemeral       pbkdf2iters           350000                        -
+    x/ephemeral       encryptionroot        x                             -
+    x/ephemeral       keystatus             available                     -
+    x/ephemeral       special_small_blocks  0                             default
+    x/ephemeral/nix   type                  filesystem                    -
+    x/ephemeral/nix   creation              Wed Sep  7  5:30 2022         -
+    x/ephemeral/nix   used                  98K                           -
+    x/ephemeral/nix   available             123G                          -
+    x/ephemeral/nix   referenced            98K                           -
+    x/ephemeral/nix   compressratio         1.00x                         -
+    x/ephemeral/nix   mounted               no                            -
+    x/ephemeral/nix   quota                 none                          default
+    x/ephemeral/nix   reservation           none                          default
+    x/ephemeral/nix   recordsize            128K                          default
+    x/ephemeral/nix   mountpoint            /nix                          local
+    x/ephemeral/nix   sharenfs              off                           default
+    x/ephemeral/nix   checksum              on                            inherited from x
+    x/ephemeral/nix   compression           zstd-2                        inherited from x
+    x/ephemeral/nix   atime                 off                           inherited from x
+    x/ephemeral/nix   devices               on                            default
+    x/ephemeral/nix   exec                  on                            default
+    x/ephemeral/nix   setuid                on                            default
+    x/ephemeral/nix   readonly              off                           default
+    x/ephemeral/nix   zoned                 off                           default
+    x/ephemeral/nix   snapdir               visible                       inherited from x
+    x/ephemeral/nix   aclmode               discard                       default
+    x/ephemeral/nix   aclinherit            restricted                    default
+    x/ephemeral/nix   createtxg             21                            -
+    x/ephemeral/nix   canmount              on                            default
+    x/ephemeral/nix   xattr                 sa                            inherited from x
+    x/ephemeral/nix   copies                1                             default
+    x/ephemeral/nix   version               5                             -
+    x/ephemeral/nix   utf8only              off                           -
+    x/ephemeral/nix   normalization         none                          -
+    x/ephemeral/nix   casesensitivity       sensitive                     -
+    x/ephemeral/nix   vscan                 off                           default
+    x/ephemeral/nix   nbmand                off                           default
+    x/ephemeral/nix   sharesmb              off                           default
+    x/ephemeral/nix   refquota              none                          default
+    x/ephemeral/nix   refreservation        none                          default
+    x/ephemeral/nix   guid                  5320075197706058104           -
+    x/ephemeral/nix   primarycache          all                           default
+    x/ephemeral/nix   secondarycache        all                           default
+    x/ephemeral/nix   usedbysnapshots       0B                            -
+    x/ephemeral/nix   usedbydataset         98K                           -
+    x/ephemeral/nix   usedbychildren        0B                            -
+    x/ephemeral/nix   usedbyrefreservation  0B                            -
+    x/ephemeral/nix   logbias               latency                       default
+    x/ephemeral/nix   objsetid              268                           -
+    x/ephemeral/nix   dedup                 off                           local
+    x/ephemeral/nix   mlslabel              none                          default
+    x/ephemeral/nix   sync                  standard                      default
+    x/ephemeral/nix   dnodesize             legacy                        default
+    x/ephemeral/nix   refcompressratio      1.00x                         -
+    x/ephemeral/nix   written               98K                           -
+    x/ephemeral/nix   logicalused           49K                           -
+    x/ephemeral/nix   logicalreferenced     49K                           -
+    x/ephemeral/nix   volmode               default                       default
+    x/ephemeral/nix   filesystem_limit      none                          default
+    x/ephemeral/nix   snapshot_limit        0                             local
+    x/ephemeral/nix   filesystem_count      0                             local
+    x/ephemeral/nix   snapshot_count        0                             local
+    x/ephemeral/nix   snapdev               hidden                        default
+    x/ephemeral/nix   acltype               off                           default
+    x/ephemeral/nix   context               none                          default
+    x/ephemeral/nix   fscontext             none                          default
+    x/ephemeral/nix   defcontext            none                          default
+    x/ephemeral/nix   rootcontext           none                          default
+    x/ephemeral/nix   relatime              off                           default
+    x/ephemeral/nix   redundant_metadata    most                          inherited from x
+    x/ephemeral/nix   overlay               on                            default
+    x/ephemeral/nix   encryption            aes-256-gcm                   -
+    x/ephemeral/nix   keylocation           none                          default
+    x/ephemeral/nix   keyformat             passphrase                    -
+    x/ephemeral/nix   pbkdf2iters           350000                        -
+    x/ephemeral/nix   encryptionroot        x                             -
+    x/ephemeral/nix   keystatus             available                     -
+    x/ephemeral/nix   special_small_blocks  0                             default
+    x/ephemeral/root  type                  filesystem                    -
+    x/ephemeral/root  creation              Wed Sep  7  5:30 2022         -
+    x/ephemeral/root  used                  98K                           -
+    x/ephemeral/root  available             123G                          -
+    x/ephemeral/root  referenced            98K                           -
+    x/ephemeral/root  compressratio         1.00x                         -
+    x/ephemeral/root  mounted               no                            -
+    x/ephemeral/root  quota                 none                          default
+    x/ephemeral/root  reservation           none                          default
+    x/ephemeral/root  recordsize            128K                          default
+    x/ephemeral/root  mountpoint            /                             local
+    x/ephemeral/root  sharenfs              off                           default
+    x/ephemeral/root  checksum              on                            inherited from x
+    x/ephemeral/root  compression           zstd-2                        inherited from x
+    x/ephemeral/root  atime                 off                           inherited from x
+    x/ephemeral/root  devices               on                            default
+    x/ephemeral/root  exec                  on                            default
+    x/ephemeral/root  setuid                on                            default
+    x/ephemeral/root  readonly              off                           default
+    x/ephemeral/root  zoned                 off                           default
+    x/ephemeral/root  snapdir               visible                       inherited from x
+    x/ephemeral/root  aclmode               discard                       default
+    x/ephemeral/root  aclinherit            restricted                    default
+    x/ephemeral/root  createtxg             15                            -
+    x/ephemeral/root  canmount              on                            default
+    x/ephemeral/root  xattr                 sa                            inherited from x
+    x/ephemeral/root  copies                1                             default
+    x/ephemeral/root  version               5                             -
+    x/ephemeral/root  utf8only              off                           -
+    x/ephemeral/root  normalization         none                          -
+    x/ephemeral/root  casesensitivity       sensitive                     -
+    x/ephemeral/root  vscan                 off                           default
+    x/ephemeral/root  nbmand                off                           default
+    x/ephemeral/root  sharesmb              off                           default
+    x/ephemeral/root  refquota              none                          default
+    x/ephemeral/root  refreservation        none                          default
+    x/ephemeral/root  guid                  1892533339168872831           -
+    x/ephemeral/root  primarycache          all                           default
+    x/ephemeral/root  secondarycache        all                           default
+    x/ephemeral/root  usedbysnapshots       0B                            -
+    x/ephemeral/root  usedbydataset         98K                           -
+    x/ephemeral/root  usedbychildren        0B                            -
+    x/ephemeral/root  usedbyrefreservation  0B                            -
+    x/ephemeral/root  logbias               latency                       default
+    x/ephemeral/root  objsetid              516                           -
+    x/ephemeral/root  dedup                 edonr,verify                  inherited from x
+    x/ephemeral/root  mlslabel              none                          default
+    x/ephemeral/root  sync                  standard                      default
+    x/ephemeral/root  dnodesize             legacy                        default
+    x/ephemeral/root  refcompressratio      1.00x                         -
+    x/ephemeral/root  written               0                             -
+    x/ephemeral/root  logicalused           49K                           -
+    x/ephemeral/root  logicalreferenced     49K                           -
+    x/ephemeral/root  volmode               default                       default
+    x/ephemeral/root  filesystem_limit      none                          default
+    x/ephemeral/root  snapshot_limit        none                          default
+    x/ephemeral/root  filesystem_count      0                             local
+    x/ephemeral/root  snapshot_count        1                             local
+    x/ephemeral/root  snapdev               hidden                        default
+    x/ephemeral/root  acltype               posix                         local
+    x/ephemeral/root  context               none                          default
+    x/ephemeral/root  fscontext             none                          default
+    x/ephemeral/root  defcontext            none                          default
+    x/ephemeral/root  rootcontext           none                          default
+    x/ephemeral/root  relatime              off                           default
+    x/ephemeral/root  redundant_metadata    most                          inherited from x
+    x/ephemeral/root  overlay               on                            default
+    x/ephemeral/root  encryption            aes-256-gcm                   -
+    x/ephemeral/root  keylocation           none                          default
+    x/ephemeral/root  keyformat             passphrase                    -
+    x/ephemeral/root  pbkdf2iters           350000                        -
+    x/ephemeral/root  encryptionroot        x                             -
+    x/ephemeral/root  keystatus             available                     -
+    x/ephemeral/root  special_small_blocks  0                             default
+    x/persistent      type                  filesystem                    -
+    x/persistent      creation              Wed Sep  7  5:30 2022         -
+    x/persistent      used                  392K                          -
+    x/persistent      available             123G                          -
+    x/persistent      referenced            98K                           -
+    x/persistent      compressratio         1.00x                         -
+    x/persistent      mounted               no                            -
+    x/persistent      quota                 none                          default
+    x/persistent      reservation           none                          default
+    x/persistent      recordsize            128K                          default
+    x/persistent      mountpoint            /persistent                   local
+    x/persistent      sharenfs              off                           default
+    x/persistent      checksum              on                            inherited from x
+    x/persistent      compression           zstd-2                        inherited from x
+    x/persistent      atime                 off                           inherited from x
+    x/persistent      devices               on                            default
+    x/persistent      exec                  on                            default
+    x/persistent      setuid                on                            default
+    x/persistent      readonly              off                           default
+    x/persistent      zoned                 off                           default
+    x/persistent      snapdir               visible                       inherited from x
+    x/persistent      aclmode               discard                       default
+    x/persistent      aclinherit            restricted                    default
+    x/persistent      createtxg             11                            -
+    x/persistent      canmount              on                            default
+    x/persistent      xattr                 sa                            inherited from x
+    x/persistent      copies                1                             default
+    x/persistent      version               5                             -
+    x/persistent      utf8only              off                           -
+    x/persistent      normalization         none                          -
+    x/persistent      casesensitivity       sensitive                     -
+    x/persistent      vscan                 off                           default
+    x/persistent      nbmand                off                           default
+    x/persistent      sharesmb              off                           default
+    x/persistent      refquota              none                          default
+    x/persistent      refreservation        none                          default
+    x/persistent      guid                  11491495962527013773          -
+    x/persistent      primarycache          all                           default
+    x/persistent      secondarycache        all                           default
+    x/persistent      usedbysnapshots       0B                            -
+    x/persistent      usedbydataset         98K                           -
+    x/persistent      usedbychildren        294K                          -
+    x/persistent      usedbyrefreservation  0B                            -
+    x/persistent      logbias               latency                       default
+    x/persistent      objsetid              261                           -
+    x/persistent      dedup                 edonr,verify                  inherited from x
+    x/persistent      mlslabel              none                          default
+    x/persistent      sync                  standard                      default
+    x/persistent      dnodesize             legacy                        default
+    x/persistent      refcompressratio      1.00x                         -
+    x/persistent      written               98K                           -
+    x/persistent      logicalused           196K                          -
+    x/persistent      logicalreferenced     49K                           -
+    x/persistent      volmode               default                       default
+    x/persistent      filesystem_limit      none                          default
+    x/persistent      snapshot_limit        none                          default
+    x/persistent      filesystem_count      3                             local
+    x/persistent      snapshot_count        0                             local
+    x/persistent      snapdev               hidden                        default
+    x/persistent      acltype               off                           default
+    x/persistent      context               none                          default
+    x/persistent      fscontext             none                          default
+    x/persistent      defcontext            none                          default
+    x/persistent      rootcontext           none                          default
+    x/persistent      relatime              off                           default
+    x/persistent      redundant_metadata    most                          inherited from x
+    x/persistent      overlay               on                            default
+    x/persistent      encryption            aes-256-gcm                   -
+    x/persistent      keylocation           none                          default
+    x/persistent      keyformat             passphrase                    -
+    x/persistent      pbkdf2iters           350000                        -
+    x/persistent      encryptionroot        x                             -
+    x/persistent      keystatus             available                     -
+    x/persistent      special_small_blocks  0                             default
     ```
     </details>
 
@@ -853,9 +844,9 @@ TODO: diagram
   ```
 
   ```bash
-  sudo mkdir -p /mnt/etc/secrets/
-  sudo cp ./root.key ./boot.key /mnt/etc/secrets/
-  sudo chmod 000 /mnt/etc/secrets/*.key
+  sudo mkdir -p /mnt/persistent/etc/secrets/
+  sudo cp ./root.key ./boot.key /mnt/persistent/etc/secrets/
+  sudo chmod 000 /mnt/persistent/etc/secrets/*.key
   ```
 
 ###
