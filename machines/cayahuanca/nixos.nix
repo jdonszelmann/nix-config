@@ -192,5 +192,19 @@ inputs@{ nixos-hardware, ragenix, ... }:
       # home-manager.users.rahul.home.file.".ssh/machine" = "/etc/secrets/${configName}";
     })
 
+    # Set up impermanence:
+    ../../modules/nixos/impermanence.nix
+    {
+      rrbutani.impermanence = {
+        persistentStorageLocation = "/persistent";
+        resetCommand = ''
+          zfs rollback -r x/ephemeral/root@blank
+        '';
+      };
+
+      home-manager.users.rahul.rrbutani.impermanence.extra = {
+        dirs = [];
+      };
+    }
   ];
 }
