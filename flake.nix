@@ -33,7 +33,7 @@
     flu.url = github:numtide/flake-utils;
   };
 
-  outputs = flakeInputs@{ self, nixpkgs, darwin, home-manager, flu, ... }: let
+  outputs = flakeInputs@{ self, nixpkgs, darwin, home-manager, flu, ragenix, ... }: let
     dir = import ./util/list-dir.nix { lib = nixpkgs.lib; };
     util = dir { of = ./util; mapFunc = _: import; };
     inputs = flakeInputs // { inherit util; };
@@ -66,6 +66,7 @@
 
         # TODO: packages: ./packages
         # TODO: apps: getExe + ./packages?
+        apps.ragenix = ragenix.apps.${sys}.ragenix;
 
         # TODO: devShells?
       }))
