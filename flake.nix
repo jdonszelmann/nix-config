@@ -28,6 +28,7 @@
       url = github:yaxitech/ragenix;
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    impermanence.url = github:nix-community/impermanence/master;
     nixos-hardware.url = github:rrbutani/nixos-hardware/master; # TODO: switch back to upstream!
     flu.url = github:numtide/flake-utils;
   };
