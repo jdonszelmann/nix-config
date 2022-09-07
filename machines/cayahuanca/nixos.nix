@@ -67,6 +67,29 @@ inputs@{ nixos-hardware, ragenix, ... }:
     # Common machine configuration.
     ../../mixins/nixos/laptop.nix
 
+
+    # Host SSH key:
+    ({ configName, ... }: {
+      services.openssh.hostKeys = [
+        {
+          path = "/etc/secrets/${configName}";
+          type = "ed25519";
+        }
+      ];
+    })
+
+    # Set up agenix:
+    ragenix.nixosModules.age
+    ({ config, configName, ... }: {
+      age = {
+        secretsDir = "/run/secrets";
+        identityPaths = (builtins.map (p: p.path) config.services.openssh.hostKeys) ++ [
+          "/run/secrets/${configName}"
+          "/run/secrets/${configName}"
+        ];
+      };
+    })
+
     # TODO: machine password
     # TODO: user password (+ override)
 
@@ -96,6 +119,55 @@ inputs@{ nixos-hardware, ragenix, ... }:
     # Users
     ../../mixins/common/users/rahul.nix
     ../../mixins/home-manager/users
+
+    # Passsword, root:
+    {
+      rrbutani.users.rahul.root = true;
+      rrbutani.users.rahul.ageEncryptedPasswordFile = ../../resources/secrets/r-pass.age;
+    }
+
+    # SSH:
+    {
+      services.openssh.enable = true;
+      users.users.rahul.openssh.authorizedKeys.keys = [
+        (import ../../resources/secrets/pub.nix).rahul
+      ];
+    }
+
+    # User keys:
+    # TODO: we'd like to have home-manager handle this but there isn't yet a
+    # good home-manager (r)agenix solution.
+    ({ config, configName, ... }: {
+      age.secrets.r-sshKey = {
+        file = ../../resources/secrets/r-gh.age;
+        mode = "600";
+        owner = "rahul";
+      };
+
+      home-manager.users.rahul.home.file = let
+        hmConfig = config.home-manager.users.rahul;
+        inherit (hmConfig.lib.file) mkOutOfStoreSymlink;
+      in {
+        ".ssh/gh".source = mkOutOfStoreSymlink config.age.secrets.r-sshKey.path;
+        ".ssh/machine".source = mkOutOfStoreSymlink "/etc/secrets/${configName}";
+      };
+
+      # home-manager.users.rahul.home.imports = [
+      #   ({ config, lib, nixosConfig, ... }: {
+      #     config = {
+      #       home.file = {
+      #         ".ssh/gh".source = config.lib.file.mkOutOfStoreSymlink
+      #           nixosConfig.age.secrets.r-sshKey.path;
+      #         ".ssh/machine".source = config.lib.file.mkOutOfStoreSymlink
+      #           "/etc/secrets/${configName}";
+      #       };
+      #     };
+      #   })
+      # ];
+
+      # home-manager.users.rahul.home.file.".ssh/gh".source = "${config.age.secrets.r-sshKey.path}";
+      # home-manager.users.rahul.home.file.".ssh/machine" = "/etc/secrets/${configName}";
+    })
 
   ];
 }
