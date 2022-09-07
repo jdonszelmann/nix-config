@@ -21,14 +21,19 @@ inputs@{ nixos-hardware, ragenix, ... }:
 
         # We use GRUB for now but we _should_ be able to use systemd-boot,
         # I think.
-        grub = {
-          enable = true;
-          device = "nodev";
-          version = 2;
-          efiSupport = true;
-          enableCryptodisk = true;
-        };
+        # TODO: grub breaks during install; "error: unknown filesystem"
+        # grub = {
+        #   enable = true;
+        #   device = "nodev";
+        #   version = 2;
+        #   efiSupport = true;
+        #   enableCryptodisk = true;
+        # };
+
+        systemd-boot.enable = true;
       };
+
+
       boot.initrd = {
         secrets = {
           # We copied these over manually as part of the installation.
