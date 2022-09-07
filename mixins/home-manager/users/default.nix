@@ -53,6 +53,25 @@ in {
         These are the users we have home-manager configs for:
         ${builtins.toString (lib.mapAttrsToList (n: _: "  - `${n}`\n") hmUserConfigs)}
       ''));
+    assertions = let
+      isEnabledUser = if isDarwin then
+        /* for `nix-darwin`, filter on `isHidden` */
+        u: !u.isHidden
+      else
+        /* for `nixos`, filter on `isNormalUser` */
+        u: u.isNormalUser
+      ;
+    in
+      lib.mapAttrsToList (n: _: {
+        assertion = isEnabledUser config.users.users.${n};
+        message = "(adding a home-manager config for `${n}`) " + (
+          if isDarwin then ''
+            `${n}` shouldn't be a hidden user! (i.e. `isHidden = false;`)
+          '' else ''
+            `${n}` should be a normal user! (i.e. `isNormalUser = true;`)
+          ''
+        );
+      }) matchedHmUserConfigs;
 
     home-manager.users = matchedHmUserConfigs;
   };
