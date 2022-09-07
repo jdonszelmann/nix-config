@@ -849,7 +849,9 @@ TODO: diagram
   sudo chmod 000 /mnt/persistent/etc/secrets/*.key
   ```
 
-5) Set up a new SSH key:
+### Other Keys
+
+##### Set Up An SSH Key
 
   NixOS can generate these for us on boot but we want to rekey our `age` encrypted secrets using the machine's SSH key so that we'll be able to decrypt the secrets on this machine.
 
@@ -866,14 +868,16 @@ TODO: diagram
   $ sudo chmod 600 /mnt/persistent/etc/secrets/cayahuanca
   ```
 
-###
+##### Secure Boot
+
+TODO: det-sys, switch to systemd-boot
 
 re-enable secure boot
 
 
-ZFS todo:
-  - elevator none in the kernel for scheduling since we're not the only partition on the disk
+### Build!
 
+`nixos-rebuild .#cayahuanca --root /mnt`
 
 TODO:
   - inline headphone media controls support

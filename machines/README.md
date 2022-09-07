@@ -9,7 +9,8 @@ exposed as:
 
 TODO: docs about switching, rebuilding, etc. for each kind:
   - nixos:
-    + `--flake '.#...'` to `nixos-rebuild`
+    + `--flake '.#...'` to `nixos-rebuild` for rebuild
+    + `--flake '.#...'` to `nixos-install --root /mnt` for install
     + manually: `nix build .#nixosConfigurations.<hostname>.config.system.build.toplevel`
   - nix-darwin: `darwin-rebuild`
     + special bootstrap for flakes: https://github.com/LnL7/nix-darwin#flakes-experimental
