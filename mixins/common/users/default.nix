@@ -6,7 +6,7 @@
 in {
   options.rrbutani.users.${name} = {
     root = lib.mkOption {
-      description = lib.mkDoc ''
+      description = lib.mdDoc ''
         Give user `${name}` sudo privileges.
       '';
       type = lib.types.bool;
@@ -14,7 +14,7 @@ in {
     };
 
     addToNixTrustedUsers = lib.mkOption {
-      description = lib.mkDoc ''
+      description = lib.mdDoc ''
         Whether to add `${name}` to <option>nix.settings.trusted-users</option>.
 
         Defaults to `true` iff <option>rrbutani.users.${name}</option> is
@@ -27,7 +27,7 @@ in {
     hmPath = ../../home-manager/users/${name}.nix;
   in lib.optionalAttrs (lib.pathExists hmPath) {
     useHmConfig = lib.mkOption {
-      description = lib.mkDoc ''
+      description = lib.mdDoc ''
         Whether to include the `home-manager` config at ${hmPath} when the
         `home-manager` user module is included.
       '';

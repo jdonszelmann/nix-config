@@ -23,6 +23,8 @@ in {
         #  - https://nix-community.github.io/home-manager/nix-darwin-options.html#nix-darwin-opt-home-manager.useUserPackages
         useUserPackages = true;
         useGlobalPkgs = true;
+
+        verbose = true;
       };
     }
   ];
