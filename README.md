@@ -302,6 +302,8 @@ this is probably a good starting point: https://github.com/NixOS/nixpkgs/blob/ma
 
 TODO: why isn't there a service abstraction in `home-manager` that papers over systemd/launchctl? https://discourse.nixos.org/t/services-on-macos/9095/4 https://github.com/nix-community/home-manager/issues/91 https://github.com/nix-community/home-manager/issues/91#issuecomment-782926192
 
+TODO: https://discourse.nixos.org/t/franken-script-to-generate-nixos-options-docs-with-custom-modules/1674
+
 # names for later
 
 [lich](https://en.wikipedia.org/wiki/Lich_(star)) (undead, pulsar)
