@@ -34,14 +34,46 @@ in {
       type = lib.types.bool;
       default = true;
     };
+  }) // (lib.optionalAttrs (!isDarwin) {
+    ageEncryptedPasswordFile = lib.mkOption {
+      description = lib.mdDoc ''
+        Optional path to an age encrypted, encrypted password file.
+
+        These can be generated with:
+        ```bash
+        mkpasswd --stdin --method=sha-256
+        ```
+
+        And then encrypted with (r)age. For example:
+        ```bash
+        {
+          echo -n "user:";
+          mkpasswd --stdin --method=sha-256
+        } | ragenix --edit password.age --editor tee
+        ```
+
+        Note that if this option is set, this module assumes that the `age`
+        NixOS module has been imported and configured: we will set age options
+        without importing it first which will cause errors if you have not
+        already imported `age`.
+      '';
+      type = lib.types.path;
+    };
   });
 
   config = {
+    age.secrets.${"${name}.pass"} = {
+      file = lib.mkIf (cfg ? ageEncryptedPasswordFile)
+        cfg.ageEncryptedPasswordFile;
+    };
+
     users.users.${name} = let
       nixosSpecificOptions = {
         home = "/home/${name}";
         isNormalUser = true;
-        # passwordFile = ""; # TODO!
+
+        passwordFile = lib.mkIf (cfg ? ageEncryptedPasswordFile)
+          config.age.secrets.${"${name}.pass"}.path;
 
         extraGroups = lib.mkIf cfg.root [ "wheel" ];
       };
