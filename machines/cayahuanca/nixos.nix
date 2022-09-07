@@ -115,6 +115,29 @@ inputs@{ nixos-hardware, ragenix, ... }:
 
     # TODO: systemd-boot + secure-boot
 
+    # Display Manager, Desktop Manager, Window Manager, etc.
+    {
+      # the name is misleading?
+      services.xserver = {
+        enable = true;
+
+        displayManager = {
+          autoLogin = { user = "rahul"; enable = true; };
+          gdm = {
+            enable = true;
+            wayland = true;
+          };
+          defaultSession = "gnome";
+        };
+
+        desktopManager = {
+          # pantheon.enable = true; # TODO
+          gnome.enable = true;
+        };
+
+        # windowManager  = ... # TODO
+      };
+    }
 
     # Users
     ../../mixins/common/users/rahul.nix
