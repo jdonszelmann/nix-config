@@ -1,5 +1,5 @@
 # We can ask for flake inputs here:
-{ config, lib, pkgs, home-manager, ... }: with lib; let
+{ config, lib, pkgs, home-manager, system, configName, ... }: with lib; let
   cfg = config.example.placeholder;
 
 in {

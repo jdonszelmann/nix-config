@@ -87,8 +87,11 @@
         # https://nixos.wiki/wiki/Flakes#Using_nix_flakes_with_NixOS
         mapFunc = n: v: let
           config = defaultFunc n v;
-          config' = config //
-            { specialArgs = { inherit(config) system; } // inputs // config.specialArgs or {}; };
+          config' = config // {
+            specialArgs =
+              { inherit (config) system; configName = n; } //
+              inputs // config.specialArgs or {};
+          };
         in
           nixpkgs.lib.nixosSystem config';
       }; }
@@ -108,8 +111,11 @@
         # https://github.com/LnL7/nix-darwin#flakes-experimental
         mapFunc = n: v: let
           config = defaultFunc n v;
-          config' = config //
-            { inputs = { inherit (config) system; } // inputs // config.inputs or {}; };
+          config' = config // {
+            inputs =
+              { inherit (config) system; configName = n; } //
+              inputs // config.inputs or {};
+            };
         in
           darwin.lib.darwinSystem config';
       }; }
@@ -136,7 +142,11 @@
             (nixpkgs.lib.filterAttrs (n: _: n != "system") config) // { inherit pkgs; } //
 
             # Prepend to `extraSpecialArgs`:
-            { extraSpecialArgs = { inherit (config) system; } // inputs // config.extraSpecialArgs or {}; };
+            {
+              extraSpecialArgs =
+                { inherit (config) system; configName = n; } //
+                inputs // config.extraSpecialArgs or {};
+            };
           in
             home-manager.lib.homeManagerConfiguration config';
       }; }
