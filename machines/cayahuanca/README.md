@@ -877,7 +877,7 @@ re-enable secure boot
 
 ### Build!
 
-`nixos-rebuild .#cayahuanca --root /mnt`
+`sudo nixos-install --flake .#cayahuanca --root /mnt`
 
 TODO:
   - inline headphone media controls support

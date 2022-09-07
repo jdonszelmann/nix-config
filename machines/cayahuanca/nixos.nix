@@ -83,10 +83,19 @@ inputs@{ nixos-hardware, ragenix, ... }:
     ({ config, configName, ... }: {
       age = {
         secretsDir = "/run/secrets";
-        identityPaths = (builtins.map (p: p.path) config.services.openssh.hostKeys) ++ [
-          "/run/secrets/${configName}"
-          "/run/secrets/${configName}"
-        ];
+        identityPaths = [
+          # For bootstrapping.
+          #
+          # This needs to go first because of this bug:
+          # https://github.com/ryantm/agenix/issues/116
+          # https://github.com/str4d/rage/issues/294
+          "/persistent/etc/secrets/${configName}"
+          "/etc/secrets/${configName}"
+
+          # config.age.secrets.machine-key.path # See above! doesn't exist while bootstrapping so we need to disable it
+        ] ++ (builtins.map (p: p.path) config.services.openssh.hostKeys);
+
+        secrets.machine-key.file = ../../resources/secrets/cayahuanca.age;
       };
     })
 
@@ -114,6 +123,8 @@ inputs@{ nixos-hardware, ragenix, ... }:
     # TODO: add this repo's extra caches to the user level nix config
 
     # TODO: systemd-boot + secure-boot
+
+    # TODO: zram swap
 
     # Display Manager, Desktop Manager, Window Manager, etc.
     {
@@ -174,22 +185,6 @@ inputs@{ nixos-hardware, ragenix, ... }:
         ".ssh/gh".source = mkOutOfStoreSymlink config.age.secrets.r-sshKey.path;
         ".ssh/machine".source = mkOutOfStoreSymlink "/etc/secrets/${configName}";
       };
-
-      # home-manager.users.rahul.home.imports = [
-      #   ({ config, lib, nixosConfig, ... }: {
-      #     config = {
-      #       home.file = {
-      #         ".ssh/gh".source = config.lib.file.mkOutOfStoreSymlink
-      #           nixosConfig.age.secrets.r-sshKey.path;
-      #         ".ssh/machine".source = config.lib.file.mkOutOfStoreSymlink
-      #           "/etc/secrets/${configName}";
-      #       };
-      #     };
-      #   })
-      # ];
-
-      # home-manager.users.rahul.home.file.".ssh/gh".source = "${config.age.secrets.r-sshKey.path}";
-      # home-manager.users.rahul.home.file.".ssh/machine" = "/etc/secrets/${configName}";
     })
 
     # Set up impermanence:
