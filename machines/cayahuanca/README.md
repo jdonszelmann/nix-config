@@ -849,6 +849,23 @@ TODO: diagram
   sudo chmod 000 /mnt/persistent/etc/secrets/*.key
   ```
 
+5) Set up a new SSH key:
+
+  NixOS can generate these for us on boot but we want to rekey our `age` encrypted secrets using the machine's SSH key so that we'll be able to decrypt the secrets on this machine.
+
+  So, we'll generate a new key pair:
+  ```bash
+  $ ssh-keygen -i cayahuanca -t ed25519
+  ```
+
+  And add the public key to [`resources/secrets/pub.nix`](../../resources/secrets/pub.nix) and then rekey our secrets as described [here](../../resources/secrets/).
+
+  Finally, we can move the keypair over to persistent storage on the machine's filesystem:
+  ```bash
+  $ sudo mv cayahuanca{,.pub} /mnt/persistent/etc/secrets/
+  $ sudo chmod 600 /mnt/persistent/etc/secrets/cayahuanca
+  ```
+
 ###
 
 re-enable secure boot
