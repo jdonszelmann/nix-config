@@ -7,7 +7,9 @@ in {
     home-manager.${if isDarwin then "darwinModules" else "nixosModules"}.home-manager
     {
       home-manager = {
-        extraSpecialArgs = specialArgs;
+        extraSpecialArgs = specialArgs // {
+          ${if isDarwin then "nixDarwinConfig" else "nixOsConfig"} = config;
+        };
 
         # This (nixos/nix-darwin) module is always meant to be used in the
         # context of system configuration; for such scenarios we always want to
