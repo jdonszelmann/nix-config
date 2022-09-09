@@ -67,6 +67,7 @@
         # TODO: packages: ./packages
         # TODO: apps: getExe + ./packages?
         apps.ragenix = ragenix.apps.${sys}.ragenix;
+        programs.ragenix = self.apps.ragenix.defaultPackage.${sys}; # Just so garnix will build this
 
         # TODO: devShells?
       }))
