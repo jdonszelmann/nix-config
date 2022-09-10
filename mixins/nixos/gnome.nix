@@ -1,100 +1,27 @@
-{
-  lib,
-  util,
-  pkgs,
-  ...
-}: let
-  gnome = util.to-gnome-settings {inherit lib;};
-
-  gsettings = /* gnome.toGnomeSettings */ {
+{ lib, util, pkgs, ... }: let
+  gnome = util.to-gnome-settings { inherit lib; };
+  gsettings = {
       org.gnome = {
-        # Geary.migrated-config = true;
-
-        # control-center = {
-        #   last-panel = "keyboard";
-        #   window-state = mkTuple [980 640 false];
-        # };
-
         desktop = {
-          #   app-folders = {
-          #     folder-children = ["Utilities" "YaST"];
-          #     folders = {
-          #       Utilities = {
-          #         apps = [
-          #           "gnome-abrt.desktop"
-          #           "gnome-system-log.desktop"
-          #           "nm-connection-editor.desktop"
-          #           "org.gnome.baobab.desktop"
-          #           "org.gnome.Connections.desktop"
-          #           "org.gnome.DejaDup.desktop"
-          #           "org.gnome.Dictionary.desktop"
-          #           "org.gnome.DiskUtility.desktop"
-          #           "org.gnome.eog.desktop"
-          #           "org.gnome.Evince.desktop"
-          #           "org.gnome.FileRoller.desktop"
-          #           "org.gnome.fonts.desktop"
-          #           "org.gnome.seahorse.Application.desktop"
-          #           "org.gnome.tweaks.desktop"
-          #           "org.gnome.Usage.desktop"
-          #           "vinagre.desktop"
-          #         ];
-          #         categories = ["X-GNOME-Utilities"];
-          #         name = "X-GNOME-Utilities.directory";
-          #         translate = true;
-          #       };
-
-          #       YaST = {
-          #         categories = ["X-SuSE-YaST"];
-          #         name = "suse-yast.directory";
-          #         translate = true;
-          #       };
-          #     };
-          #   };
-
           background = {
             color-shading-type = "solid";
             picture-options = "zoom";
-            # picture-uri = /run/current-system/sw/share/backgrounds/gnome/blobs-l.svg;
             picture-uri = "file:///run/current-system/sw/share/backgrounds/gnome/blobs-l.svg";
-            # picture-uri-dark = /run/current-system/sw/share/backgrounds/gnome/blobs-d.svg;
             picture-uri-dark = "file:///run/current-system/sw/share/backgrounds/gnome/blobs-d.svg";
             primary-color = "#3465a4";
             secondary-color = "#000000";
           };
-
-          # input-sources = {
-          #   sources = [
-          #     (mkTuple [ "xkb" "us" ])
-          #   ];
-          #   xkb-options = [
-          #     "terminate:ctrl_alt_bksp"
-          #     "caps:ctrl_modifier"
-          #     "shift:both_capslock"
-          #     "compose:ralt"
-          #   ];
-          # };
 
           interface = {
             color-scheme = "prefer-dark";
             show-battery-percentage = true;
           };
 
-          # notifications.application-children = [ "org-gnome-console" "firefox" ];
-          # notifications.application = {
-          #   org-gnome-console.application-id = "org.gnome.Console.desktop";
-          #   firefox.application-id = "firefox.desktop";
-          # };
-
           peripherals.touchpad = {
             speed = 0.027778;
             tap-to-click = true;
             two-finger-scrolling-enabled = true;
           };
-
-          # privacy = {
-          #   old-files-age = mkUint32 30;
-          #   recent-files-max-age = -1;
-          # };
 
           screensaver = {
             color-shading-type = "solid";
@@ -104,12 +31,6 @@
             primary-color = "#3465a4";
             secondary-color = "#000000";
           };
-
-          # search-providers.sort-order = [
-          #   "org.gnome.Contacts.desktop"
-          #   "org.gnome.Documents.desktop"
-          #   "org.gnome.Nautilus.desktop"
-          # ];
 
           session.idle-delay = gnome.mkUint32 240;
 
@@ -128,11 +49,6 @@
             toggle-fullscreen = ["<Shift><Super>f"];
           };
         };
-
-        # evolution-data-server = {
-        #   migrated = true;
-        #   network-monitor-gio-name = "";
-        # };
 
         mutter = {
           attach-modal-dialogs = true;
@@ -198,12 +114,8 @@
             "org.gnome.Settings.desktop"
             # Move out!!!
           ];
-
-          # world-clocks.locations = mkLocation [];
         };
       };
-
-      # system.proxy.mode = "none";
     };
 
     mkCompiledDconf = conf: let
@@ -218,14 +130,73 @@
     in
       "file-db:${compiled}";
 in {
+  # Unfortunately, these settings don't actually take: https://github.com/NixOS/nixpkgs/issues/66554
+  # https://github.com/NixOS/nixpkgs/issues/54150
+  # :-(
+  #
+  # This PR fixes it though, by creating a user dconf config:
+  # https://github.com/NixOS/nixpkgs/pull/189099
+
+  # Until this PR is ready, we just write out the file directly.
+  # https://github.com/NixOS/nixpkgs/pull/189099
+
+  # Because the above PR changes `lib`, swapping it's `dconf` module
+  # into our config (using `disabledModules` to disable our `dconf`
+  # module) is not so straightforward.
+  # disabledModules = [ ];
+  # imports = [ ];
+
+  # TODO: gate on this being enabled, don't tie to this user..
+  #
+  # See: https://gitlab.gnome.org/GNOME/gnome-control-center/-/issues/95
+  home-manager.users.rahul.rrbutani.impermanence.extra.files = [
+    ".local/share/sounds/" # TODO: configure this in nix, too?
+  ];
+  # It's just a directory with:
+  #  __custom/index.theme:
+  # ```
+  # [Sound Theme]
+  # Name=Custom
+  # Inherits=__custom
+  # Directories=.
+  # ```
+  # and
+  # `bell-terminal.ogg` and `bell-window-system.ogg` that are symlinks to `gnome-control-center/share/sounds/default/allerts/glass.ogg`
+
   services.xserver.desktopManager.gnome = {
     enable = true;
+
     # You can dump these with `dconf dump /`.
     #
     # As you're making change in the GUI you can observe them with `dconf watch /`
     #
     # See: https://askubuntu.com/questions/522833/how-to-dump-all-dconf-gsettings-so-that-i-can-compare-them-between-two-different
-    extraGSettingsOverrides = gsettings;
+    # extraGSettingsOverrides = gsettings;
   };
 
+  /* Stop gap, see above. */
+  # environment.etc."dconf/profile/user-gdm-settings" = {
+  environment.etc."dconf/profile/user" = {
+    text = "user-db:user\n" + (mkCompiledDconf gsettings);
+  };
+  environment.etc."dconf/profile.d/user".text = gnome.toGnomeSettings gsettings;
+  programs.dconf.profiles = lib.mkForce {};
+
+  # This will shadow the default gdm config:
+  # https://github.com/NixOS/nixpkgs/pull/189099/files#diff-f5360a6ed414ff1e292e501143681f1cddea53d4e9ea7ce31ef310e4dc4b378dL232-R237
+  #
+  # So we add it back in as a separate config file:
+  # environment.etc."dconf/profile/gdm-default" = {
+  #   test = gnome.toGnomeSettings {
+  #     org.gnome.settings-daemon.plugins.power = {
+  #       sleep-inactive-ac-type = "nothing";
+  #       sleep-inactive-battery-type = "nothin";
+  #       # sleep-inactive-ac-timeout;
+  #     };
+  #   };
+  # };
+
+  environment.sessionVariables = {
+    DCONF_PROFILE = "user";
+  };
 }
