@@ -107,6 +107,12 @@ inputs@{ nixos-hardware, ragenix, ... }:
 
       # `/etc/secrets/root.key` is available in the initrd
       boot.zfs.requestEncryptionCredentials = true;
+
+      # Misc:
+      # (ZFS wants the keys to live at `/etc/secrets`; this is handled fine in the
+      # initrd but here we'll need a symlink to be able to mount from a running
+      # system)
+      environment.etc."secrets".source = "/persistent/etc/secrets";
     })
 
 
