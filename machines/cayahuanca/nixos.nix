@@ -120,6 +120,8 @@ inputs@{ nixos-hardware, ragenix, ... }:
     # Common machine configuration.
     ../../mixins/nixos/laptop.nix
 
+    # Fingerprint Auth:
+    ../../mixins/nixos/fprint.nix
 
     # Host SSH key:
     ({ configName, ... }: {
