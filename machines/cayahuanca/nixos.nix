@@ -7,9 +7,7 @@ inputs@{ nixos-hardware, ragenix, ... }:
     ./hardware-configuration.nix
 
     # Boot/Encryption:
-    { lib, ... }: {
-      # boot.zfs.enableUnstable = true;
-
+    ({ lib, ... }: {
       boot.loader = {
         efi = {
           # We want to update the entries in NVRAM!
@@ -22,13 +20,13 @@ inputs@{ nixos-hardware, ragenix, ... }:
         # We use GRUB for now but we _should_ be able to use systemd-boot,
         # I think.
         # TODO: grub breaks during install; "error: unknown filesystem"
-        # grub = {
-        #   enable = true;
-        #   device = "nodev";
-        #   version = 2;
-        #   efiSupport = true;
-        #   enableCryptodisk = true;
-        # };
+        grub = {
+          enable = true;
+          device = "nodev";
+          version = 2;
+          efiSupport = true;
+          enableCryptodisk = true;
+        };
 
         # The "problem" with systemd-boot is that it does .efi booting only and
         # does not have built in knowledge of filesystems, etc.
@@ -81,8 +79,19 @@ inputs@{ nixos-hardware, ragenix, ... }:
         systemd-boot.enable = lib.mkForce false;
       };
 
-
       boot.initrd = {
+        # When using GRUB, the initramfs will live on `/boot` which is LUKS
+        # encrypted.
+        #
+        # GRUB (lives on the EFI System Partition) will prompt us once to unlock
+        # `/boot` and from there, it will load the initramfs.
+        #
+        # The initramfs will mount `/boot` a second time (as well as `/root`) as
+        # part of stage1-init. We don't want to have to enter our password a
+        # second time which is why we include these keys in the initramfs.
+        #
+        # Because the initramfs lives on encrypted storage (when using GRUB) this
+        # is still secure.
         secrets = {
           # We copied these over manually as part of the installation.
           #
@@ -96,7 +105,10 @@ inputs@{ nixos-hardware, ragenix, ... }:
 
         luks.devices.boot.keyFile = "/etc/secrets/boot.key";
       };
-    }
+
+      # `/etc/secrets/root.key` is available in the initrd
+      boot.zfs.requestEncryptionCredentials = true;
+    })
 
 
     # Filesystems:
@@ -107,15 +119,11 @@ inputs@{ nixos-hardware, ragenix, ... }:
       boot.kernelParams = [ "nohibernate" ];
       services.zfs.autoScrub.enable = true; # TODO
 
-      # `/etc/secrets/root.key` is available in the initrd
-      boot.zfs.requestEncryptionCredentials = true;
-
       # TODO: snapshots
 
       networking.hostId = "c9aae02d";
     }
-      # TODO: zfs snapshot config
-
+    # TODO: zfs snapshot config
 
     # Common machine configuration.
     ../../mixins/nixos/laptop.nix
