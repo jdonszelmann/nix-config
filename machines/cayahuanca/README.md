@@ -826,6 +826,11 @@ TODO: diagram
   ```bash
   sudo mkdir -p /mnt
 
+  # Root:
+  sudo zpool import x -f -R /mnt
+  sudo zfs load-key -L file://$(realpath ./root.key) x
+  sudo zfs mount -a
+
   # Boot and ESP:
   sudo mkdir -p /mnt/boot
   sudo cryptsetup luksOpen /dev/nvme0n1p5 boot-partition -d ./boot.key
@@ -833,11 +838,6 @@ TODO: diagram
 
   sudo mkdir -p /mnt/boot/efi
   sudo mount /dev/nvme0n1p1 /mnt/boot/efi
-
-  # Root:
-  sudo zpool import x -R /mnt
-  sudo zfs load-key -L file://$(realpath ./root.key) x
-  sudo zfs mount -a
 
   # Swap (optional):
   sudo swapon /dev/nvme0n1p7

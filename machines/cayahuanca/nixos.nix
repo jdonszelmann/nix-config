@@ -19,7 +19,6 @@ inputs@{ nixos-hardware, ragenix, ... }:
 
         # We use GRUB for now but we _should_ be able to use systemd-boot,
         # I think.
-        # TODO: grub breaks during install; "error: unknown filesystem"
         grub = {
           enable = true;
           device = "nodev";
