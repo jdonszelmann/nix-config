@@ -36,8 +36,12 @@
   # that require some of our other datasets to be mounted so: we explicitly
   # mount everything at the end of stage 1 with a `postMountCommands` snippet.
   #
-  # This has some relevant stuff:
+  # This has some old but still somewhat relevant stuff
   # https://toxicfrog.github.io/automounting-zfs-on-nixos/
+  #
+  # Note that as per NixOS 22.05, the ZFS Mount service is enabled by default;
+  # we only need our `postMountCommands` hook because we require some of our
+  # ZFS datasets during stage2 of boot.
   fileSystems."/" = {
     device = "x/ephemeral/root";
     fsType = "zfs";
@@ -46,11 +50,6 @@
     device = "x/ephemeral/nix";
     fsType = "zfs";
   };
-  # fileSystems."/persistent" = {
-  #   device = "x/persistent";
-  #   fsType = "zfs";
-  #   neededForBoot = true;
-  # };
   boot.initrd.postMountCommands = ''
     zfs mount -a
   '';
