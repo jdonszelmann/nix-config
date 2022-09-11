@@ -1,0 +1,22 @@
+//
+{   "ex": false, /* TODO */ // "foo": "\n\n// /*  *///", // gotto stress test the jsonc -> json processor
+    "workbench.colorTheme": "Abyss", // oiefoiehf
+    "nix.enableLanguageServer": true,
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "terminal.integrated.enableMultiLinePasteWarning": false,
+    "window.titleBarStyle": "GitHub Dark Default",
+
+    "terminal.integrated.scrollback": 10000,
+
+    "editor.rulers": [ 80 ],
+
+    "[nix]": {
+      "editor.tabSize": 2,
+      // "editor.defaultFormatter": "kamadorueda.alejandra",
+      // "editor.formatOnPaste": true,
+      "editor.formatOnSave": false,
+      "editor.formatOnType": false,
+      "editor.rulers": [ 80 ]
+    }
+}

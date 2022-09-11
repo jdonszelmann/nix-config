@@ -1,0 +1,90 @@
+[
+    {
+        "key": "ctrl+shift+d",
+        "command": "-workbench.view.debug",
+        "when": "viewContainer.workbench.view.debug.enabled"
+    },
+    {
+        "key": "ctrl+shift+d",
+        "command": "editor.action.duplicateSelection"
+    },
+    {
+        "key": "alt+left",
+        "command": "cursorWordLeft",
+        "when": "textInputFocus"
+    },
+    {
+        "key": "ctrl+left",
+        "command": "-cursorWordLeft",
+        "when": "textInputFocus"
+    },
+    {
+        "key": "shift+alt+left",
+        "command": "cursorWordLeftSelect",
+        "when": "textInputFocus"
+    },
+    {
+        "key": "ctrl+shift+left",
+        "command": "-cursorWordLeftSelect",
+        "when": "textInputFocus"
+    },
+    {
+        "key": "shift+alt+right",
+        "command": "cursorWordEndRightSelect",
+        "when": "textInputFocus"
+    },
+    {
+        "key": "ctrl+shift+right",
+        "command": "-cursorWordEndRightSelect",
+        "when": "textInputFocus"
+    },
+    {
+        "key": "alt+right",
+        "command": "cursorWordEndRight",
+        "when": "textInputFocus"
+    },
+    {
+        "key": "ctrl+right",
+        "command": "-cursorWordEndRight",
+        "when": "textInputFocus"
+    },
+    {
+        "key": "alt+-",
+        "command": "workbench.action.navigateBack",
+        "when": "canNavigateBack"
+    },
+    {
+        "key": "ctrl+alt+-",
+        "command": "-workbench.action.navigateBack",
+        "when": "canNavigateBack"
+    },
+    {
+        "key": "shift+alt+-",
+        "command": "workbench.action.navigateForward",
+        "when": "canNavigateForward"
+    },
+    {
+        "key": "ctrl+shift+-",
+        "command": "-workbench.action.navigateForward",
+        "when": "canNavigateForward"
+    },
+    {
+        "key": "shift+alt+l",
+        "command": "editor.action.insertCursorAtEndOfEachLineSelected",
+        "when": "editorTextFocus"
+    },
+    {
+        "key": "ctrl+m",
+        "command": "editor.action.jumpToBracket",
+        "when": "editorTextFocus"
+    },
+    {
+        "key": "ctrl+shift+\\",
+        "command": "-editor.action.jumpToBracket",
+        "when": "editorTextFocus"
+    },
+    {
+        "key": "ctrl+m",
+        "command": "-editor.action.toggleTabFocusMode"
+    }
+]
