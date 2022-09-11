@@ -1,1 +1,1 @@
-import ./. { name = "rahul"; }
+import ./. { name = "rahul"; fullName = "Rahul Butani"; }

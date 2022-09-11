@@ -34,7 +34,7 @@ Fortunately we can (ab)use `--editor` for this:
     nix run ../..#ragenix -- --edit secret.age --editor "cp -t ."; cat input
     ```
 
-<!-- `{ echo -n "user:"; mkpasswd --stdin --method=sha-256; } | nix run ../..#ragenix -- --edit r-pass.age --editor tee` -->
+<!-- `mkpasswd --stdin --method=sha-256 | nix run ../..#ragenix -- --edit r-pass.age --editor tee` -->
 
 #### Updating Secrets
 

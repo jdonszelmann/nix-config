@@ -46,10 +46,7 @@ in {
 
         And then encrypted with (r)age. For example:
         ```bash
-        {
-          echo -n "user:";
-          mkpasswd --stdin --method=sha-256
-        } | ragenix --edit password.age --editor tee
+        mkpasswd --stdin --method=sha-256 | ragenix --edit password.age --editor tee
         ```
 
         Note that if this option is set, this module assumes that the `age`
@@ -89,7 +86,7 @@ in {
         nixosSpecificOptions;
     in {
       inherit name;
-      description = "User account for ${fullName}.";
+      description = fullName;
       home = "/home/${name}";
       # createHome = true; # !!! TODO: is this what we want? even on darwin?
     } // extras;
