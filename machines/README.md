@@ -12,6 +12,9 @@ TODO: docs about switching, rebuilding, etc. for each kind:
     + `--flake '.#...'` to `nixos-rebuild` for rebuild
     + `--flake '.#...'` to `nixos-install --root /mnt` for install
     + manually: `nix build .#nixosConfigurations.<hostname>.config.system.build.toplevel`
+    + Note: https://github.com/NixOS/nixpkgs/issues/42117
+      * i.e. the VSCode terminal (which runs under FHS)
+        - https://discourse.nixos.org/t/sudo-does-not-work-from-within-vscode-fhs/14227
   - nix-darwin: `darwin-rebuild`
     + special bootstrap for flakes: https://github.com/LnL7/nix-darwin#flakes-experimental
     + manually: `nix build .#darwinConfigurations.<hostname>.system`

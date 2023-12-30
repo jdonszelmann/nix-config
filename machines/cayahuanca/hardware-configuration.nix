@@ -15,5 +15,19 @@
 
   hardware.enableRedistributableFirmware = true;
 
-  powerManagement.cpuFreqGovernor = lib.mkDefault "powersave";
+  # TODO: tlp, powertop
+  # tlp: stop charge at 80
+  powerManagement.cpuFreqGovernor = lib.mkDefault "performance";
+
+
+  # https://www.kernel.org/doc/html/v5.4/admin-guide/laptops/thinkpad-acpi.html
+  # https://ibm-acpi.sourceforge.net/
+
+  # TODO: aliases for `/proc/acpi/ibm/led`
+  #   -  0: power button
+  #   -  7: ???
+  #   - 10: thinkpad "i" lid light
+  #   - 12: ???
+  #
+  # or maybe a setuid binary that toggles the leds
 }

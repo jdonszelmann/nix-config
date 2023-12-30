@@ -330,3 +330,8 @@ around lich:
   - dragur
 isagel (character from aniara)
 tondra (nap, sleepy)
+
+
+---
+
+TODO: figure out how to pass `--backup` to home-manager running in the flake

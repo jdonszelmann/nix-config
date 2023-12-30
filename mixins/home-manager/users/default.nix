@@ -29,6 +29,9 @@ in {
         verbose = true;
       };
     }
+
+    # TODO: we depend on `mixins/common/default/nix` for `useHmConfig`;
+    # make this dep explicit? (i.e. declare as an import here)
   ];
 
   config = let

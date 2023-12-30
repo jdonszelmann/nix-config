@@ -1,5 +1,5 @@
 {
-  description = "yo";
+  description = ""; # TODO
   nixConfig = {
     bash-prompt = "\[config\]$ ";
     extra-substituters = [
@@ -24,16 +24,28 @@
       url = github:nix-community/home-manager/master;
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    agenix = {
+      url = github:ryantm/agenix;
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.darwin.follows = "darwin";
+      inputs.home-manager.follows = "home-manager";
+    };
     ragenix = {
       url = github:yaxitech/ragenix;
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
+      inputs.agenix.follows = "agenix";
     };
-    impermanence.url = github:nix-community/impermanence/master;
+    impermanence.url = github:nix-community/impermanence?rev=6138eb8e737bffabd4c8fc78ae015d4fd6a7e2fd; # TODO: unpin
+    nix-index-database = {
+      url = github:Mic92/nix-index-database/main;
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nixos-hardware.url = github:rrbutani/nixos-hardware/master; # TODO: switch back to upstream!
-    flu.url = github:numtide/flake-utils;
+    flake-utils.url = github:numtide/flake-utils;
   };
 
-  outputs = flakeInputs@{ self, nixpkgs, darwin, home-manager, flu, ragenix, ... }: let
+  outputs = flakeInputs@{ self, nixpkgs, darwin, home-manager, flake-utils, ragenix, ... }: let
     dir = import ./util/list-dir.nix { lib = nixpkgs.lib; };
     util = dir { of = ./util; mapFunc = _: import; };
     inputs = flakeInputs // { inherit util; };
@@ -47,7 +59,7 @@
 
     list = [
       # Outputs tagged with a `<system>`:
-      (flu.lib.eachDefaultSystem (sys: {
+      (flake-utils.lib.eachDefaultSystem (sys: {
         # TODO: do we have other checks? packages? etc
         checks = with nixpkgs.lib; let
           tagAndExtract = { tag, ex }: mapAttrs'

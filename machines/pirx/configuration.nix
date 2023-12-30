@@ -17,7 +17,7 @@
   # Hibernation with ZFS is problematic as per:
   # https://nixos.wiki/wiki/ZFS#Caveats
   boot.kernelParams = [ "nohibernate" ];
-  
+
   # !!! see if we need to add modules to initrd for accelerating
   # decryption (see: nixos.wiki/wiki/Full_Disk_Encryption#Perf_test)
   #
@@ -39,7 +39,7 @@
 
   # Set your time zone.
   # time.timeZone = "Europe/Amsterdam";
-  time.timeZone = "America/Rainy_River";
+  time.timeZone = "America/Los_Angeles";
 
   # The global useDHCP flag is deprecated, therefore explicitly set to false here.
   # Per-interface useDHCP will be mandatory in the future, so this generated config
@@ -64,7 +64,7 @@
   # Enable the GNOME Desktop Environment.
   services.xserver.displayManager.gdm.enable = true;
   services.xserver.desktopManager.gnome.enable = true;
-  
+
 
   # Configure keymap in X11
   # services.xserver.layout = "us";

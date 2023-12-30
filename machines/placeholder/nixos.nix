@@ -23,7 +23,6 @@ inputs@{ home-manager, ... }:
       users.users.example = {
         home = "/home/example";
         isNormalUser = true;
-        group = "example";
       };
 
       fileSystems."/" = {

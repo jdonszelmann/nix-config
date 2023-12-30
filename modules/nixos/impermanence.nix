@@ -20,7 +20,7 @@ in {
       '';
       type = lib.types.str;
       default = "";
-      example = "zfs rollback -r x/ephemeral/root@blank";
+      example = "zfs rollback -r x/ephemeral/root@tabula-rasa";
     };
 
     persistentStorageLocation = lib.mkOption {

@@ -50,6 +50,12 @@
     device = "x/ephemeral/nix";
     fsType = "zfs";
   };
+  fileSystems."/persistent" = {
+    device = "x/persistent";
+    fsType = "zfs";
+    # `agenix` needs keys that reside here during stage2.
+    neededForBoot = true;
+  };
   boot.initrd.postMountCommands = ''
     zfs mount -a
   '';

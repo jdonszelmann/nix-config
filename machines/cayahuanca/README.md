@@ -324,7 +324,7 @@ TODO: diagram
       # so that things like journalctl work, enable posix acls:
       sudo zfs set acltype=posixacl x/ephemeral/root
       # while it's still pristine:
-      sudo zfs snapshot x/ephemeral/root@blank
+      sudo zfs snapshot x/ephemeral/root@tabula-rasa
 
       # `/nix`:
       sudo zfs create -v -u -o mountpoint=/nix x/ephemeral/nix
@@ -442,7 +442,7 @@ TODO: diagram
     x/ephemeral                   294K   123G       98K  none
     x/ephemeral/nix                98K   123G       98K  /nix
     x/ephemeral/root               98K   123G       98K  /
-    x/ephemeral/root@blank          0B      -       98K  -
+    x/ephemeral/root@tabula-rasa          0B      -       98K  -
     x/persistent                  392K   123G       98K  /persistent
     x/persistent/home             294K   123G       98K  /persistent/home
     x/persistent/home/rahul       196K   123G       98K  /persistent/home/rahul

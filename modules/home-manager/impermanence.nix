@@ -23,7 +23,7 @@ in {
       type = lib.types.path;
       example = "/persistent/home/foo";
     } // (lib.optionalAttrs (nixOsImpCfg ? persistentStorageLocation) {
-      default = nixOsImpCfg.persistentStorageLocation + "/home/" + config.home.username;
+      default = nixOsImpCfg.persistentStorageLocation + config.home.homeDirectory;
     }));
 
     extra = let
@@ -50,6 +50,9 @@ in {
     home.persistence.${cfg.persistentStorageLocation} = {
       directories = let
         dirs = [
+          ".local/share/direnv" # TODO: move this
+          ".local/share/nix" # TODO: move this
+
           ".local/share/keyrings"
 
           # This is because the activation script falls

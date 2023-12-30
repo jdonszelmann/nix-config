@@ -1,4 +1,4 @@
-{ lib }:
+{ lib }: # TODO: have this be defaulted and moved to the inputs below?
 
 let listDirFunc =
 { includeFilesWithExtension ? "nix"

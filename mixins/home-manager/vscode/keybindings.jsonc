@@ -86,5 +86,28 @@
     {
         "key": "ctrl+m",
         "command": "-editor.action.toggleTabFocusMode"
+    },
+    {
+        "key": "ctrl+shift+t",
+        "command": "workbench.action.terminal.new",
+        "when": "terminalFocus"
+    },
+    {
+        "key": "ctrl+shift+\\",
+        "command": "workbench.action.terminal.split",
+        "when": "terminalFocus && terminalProcessSupported || terminalFocus && terminalWebExtensionContributedProfile"
+    },
+    {
+        "key": "ctrl+k ctrl+g",
+        "command": "gitlens.copyRemoteFileUrlToClipboard"
+    },
+    {
+        "key": "ctrl+shift+/",
+        "command": "editor.action.blockComment",
+        "when": "editorTextFocus && !editorReadonly"
     }
+    // {
+    //     "key": "ctrl+escape",
+    //     "command": "workbench.action.closeSidebar"
+    // }
 ]

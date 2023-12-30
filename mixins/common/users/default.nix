@@ -41,12 +41,12 @@ in {
 
         These can be generated with:
         ```bash
-        mkpasswd --stdin --method=sha-256
+        mkpasswd --stdin --method=sha-512
         ```
 
         And then encrypted with (r)age. For example:
         ```bash
-        mkpasswd --stdin --method=sha-256 | ragenix --edit password.age --editor tee
+        mkpasswd --stdin --method=sha-512 | ragenix --edit password.age --editor tee
         ```
 
         Note that if this option is set, this module assumes that the `age`
@@ -69,7 +69,7 @@ in {
         home = "/home/${name}";
         isNormalUser = true;
 
-        passwordFile = lib.mkIf (cfg ? ageEncryptedPasswordFile)
+        hashedPasswordFile = lib.mkIf (cfg ? ageEncryptedPasswordFile)
           config.age.secrets.${"${name}.pass"}.path;
 
         extraGroups = lib.mkIf cfg.root [ "wheel" ];
@@ -96,6 +96,9 @@ in {
       admin.members = lib.mkIf cfg.root [ name ];
     };
 
-    nix.settings.trusted-users = lib.mkIf cfg.addToNixTrustedUsers [ name ];
+    nix.settings.trusted-users = lib.mkIf cfg.addToNixTrustedUsers [
+      /* in case this is overriden from the default elsewhere */
+      config.users.users.${name}.name
+    ];
   };
 }
