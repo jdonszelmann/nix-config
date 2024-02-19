@@ -29,6 +29,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.darwin.follows = "darwin";
       inputs.home-manager.follows = "home-manager";
+      inputs.systems.follows = "flake-utils/systems";
     };
     ragenix = {
       url = github:yaxitech/ragenix;

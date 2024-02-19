@@ -44,8 +44,8 @@ in {
   #  - https://discourse.nixos.org/t/setting-caps-lock-as-ctrl-not-working/11952/8
   #  - https://discourse.nixos.org/t/problem-with-xkboptions-it-doesnt-seem-to-take-effect/5269/11
   # `gsettings get org.gnome.desktop.input-sources xkb-options "['a','x']"` seems to do it, for manual setting
-  services.xserver.layout = "us";
-  services.xserver.xkbOptions = builtins.concatStringsSep "," xkbOptions;
+  services.xserver.xkb.layout = "us";
+  services.xserver.xkb.options = builtins.concatStringsSep "," xkbOptions;
 
   # Enable CUPS:
   services.printing.enable = true;
