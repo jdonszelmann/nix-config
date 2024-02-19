@@ -20,7 +20,7 @@
 # It's not pretty but it's an effective stopgap solution.
 
 { lib, util, pkgs, config, ... }: let
-  gnome = util.to-gnome-settings { inherit lib; };
+  gnome = util.to-gnome-settings;
 
   mkCompiledDconf = conf: let
     str = gnome.toGnomeSettings conf;

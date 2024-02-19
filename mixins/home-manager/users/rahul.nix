@@ -22,7 +22,8 @@ inputs@{ config, pkgs, ragenix, system, nix-index-database,
       ".config/Code/User/workspaceStorage"
       ".config/Code/User/globalStorage"
 
-      ".config/Code/Backups/workspaces.json"
+      # ".config/Code/Backups/workspaces.json"
+      ".config/Code/Backups/"
       ".config/Code/databases"
 
       ".mozilla/firefox" # TODO: narrow
@@ -38,12 +39,14 @@ inputs@{ config, pkgs, ragenix, system, nix-index-database,
       # ".config/spotify/prefs"
       # ".config/spotify/Users"
 
-
       # Cargo:
       # TODO: switch to managing the .cargo/config file ourselves +
       # ditch this registry entry when `sparse-registry` hits stable!
       ".cargo/registry"
       ".cargo/config"
+
+      # TODO:
+      # /var/lib/systemd/coredump?
     ];
     files = [
       "dev" # :shrug:
@@ -70,7 +73,11 @@ inputs@{ config, pkgs, ragenix, system, nix-index-database,
     videos = "/dev/null";
   };
 
-  # TODO: `dev` entry in sidebar in file explorer
+  # `dev` entry in sidebar in file explorer
+  gtk.gtk3.bookmarks = [
+    "file:///home/${config.home.username}/dev"
+    "file:///tmp"
+  ];
 
   home = rec {
     username = "rahul";
@@ -96,6 +103,7 @@ inputs@{ config, pkgs, ragenix, system, nix-index-database,
     mosh
 
     ripgrep
+    moreutils
 
     # TODO: overlay to update tokei?
     # See: https://github.com/XAMPPRocky/tokei/issues/911

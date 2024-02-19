@@ -1,4 +1,4 @@
-{ lib, pkgs ? null }: with builtins; let
+{ lib }: with builtins; let
   primitives = {
     list = l: "[${concatStringsSep ", " (map primMap l)}]";
     string = s: "'${s}'";
@@ -86,7 +86,7 @@
   in
     convert "" attrset;
 
-  tests = [ {
+  tests = { big = {
     attrset = {
       org.gnome = {
         Geary.migrated-config = true;
@@ -260,7 +260,7 @@
 
           keybindings = {
             show-screen-recording-ui = [ "<Shift><Super>r" ];
-            show-screenshot-ui = [ "<Shift><Super>s" "Print" ];
+            show-screenshot-ui = [ "<Shift><Super>s" ];
           };
 
           world-clocks.locations = mkLocation [];
@@ -402,20 +402,22 @@
       [system/proxy]
       mode='none'
     '' + "\n";
-  } ];
-  test = { attrset, expected }: let
+  }; };
+  test = { pkgs ? null, name, attrset, expected }: let
     got = toGnomeSettings attrset;
   in
-    if got == expected then
+    if pkgs != null then
+      pkgs.runCommand "gnome-settings-test-${name}"
+        { inherit got expected; passAsFile = [ "got" "expected" ]; }
+      ''
+        ${pkgs.colordiff}/bin/colordiff -y <(cat -te $expectedPath) <(cat -te $gotPath)
+        touch $out
+      ''
+    else if got == expected then
       true
-    else if pkgs == null then
+    else
       throw "expected:\n```\n${expected}\n```\n\ngot:\n```\n${got}\n"
-    else pkgs.runCommand "diff"
-      { inherit got expected; passAsFile = [ "got" "expected" ]; }
-    ''
-      ${pkgs.colordiff}/bin/colordiff -y <(cat -te $expectedPath) <(cat -te $gotPath)
-      exit 1
-    '';
+    ;
 
   # This situation is easy to workaround; not sure if this is always true though..
   uh-oh = ''
@@ -432,7 +434,10 @@
     name='Open Terminal'
   '';
 
-  checks = map test tests;
+  checks = { pkgs }: lib.mapAttrs
+    (name: attrs: test (attrs // { inherit name pkgs; }))
+    tests
+  ;
 in {
   inherit toGnomeSettings mkTuple mkUint32 mkLocation checks;
 }

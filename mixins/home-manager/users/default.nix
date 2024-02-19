@@ -36,7 +36,7 @@ in {
 
   config = let
     cfg = config.rrbutani.users;
-    dir = util.list-dir { inherit lib; };
+    dir = util.list-dir;
 
     hmEnabledUsers = lib.filterAttrs (_: v: v.useHmConfig or false) cfg;
 

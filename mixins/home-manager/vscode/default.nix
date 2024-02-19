@@ -1,5 +1,5 @@
 { config, lib, util, pkgs, ... }: let
-  jsonc = util.read-jsonc {inherit lib;};
+  jsonc = util.read-jsonc;
 in {
   programs.vscode = {
     enable = true;

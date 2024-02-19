@@ -1,5 +1,5 @@
 { lib, util, pkgs, ... }: let
-  gnome = util.to-gnome-settings { inherit lib; };
+  gnome = util.to-gnome-settings;
 
   # You can dump these with `dconf dump /`.
   #
@@ -15,9 +15,9 @@
           picture-options = "zoom";
           # picture-uri = "file:///run/current-system/sw/share/backgrounds/gnome/blobs-l.svg";
           # picture-uri-dark = "file:///run/current-system/sw/share/backgrounds/gnome/blobs-d.svg";
-          picture-uri = "file:///run/current-system/sw/share/backgrounds/gnome/adwaita-d.jpg";
-          picture-uri-dark = "file:///run/current-system/sw/share/backgrounds/gnome/adwaita-l.jpg";
-          primary-color = "#3465a4";
+          picture-uri = "file:///run/current-system/sw/share/backgrounds/gnome/adwaita-l.jpg";
+          picture-uri-dark = "file:///run/current-system/sw/share/backgrounds/gnome/adwaita-d.jpg";
+          primary-color = "#3071AE";
           secondary-color = "#000000";
         };
 
@@ -34,8 +34,8 @@
           picture-options = "zoom";
           # picture-uri = "file:///run/current-system/sw/share/backgrounds/gnome/blobs-l.svg";
           # picture-uri = "file:///run/current-system/sw/share/backgrounds/gnome/adwaita-d.webp";
-          picture-uri = "file:///run/current-system/sw/share/backgrounds/gnome/adwaita-d.jpg";
-          primary-color = "#3465a4";
+          picture-uri = "file:///run/current-system/sw/share/backgrounds/gnome/adwaita-l.jpg";
+          primary-color = "#3071AE";
           secondary-color = "#000000";
         };
 

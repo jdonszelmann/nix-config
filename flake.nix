@@ -46,8 +46,9 @@
   };
 
   outputs = flakeInputs@{ self, nixpkgs, darwin, home-manager, flake-utils, ragenix, ... }: let
-    dir = import ./util/list-dir.nix { lib = nixpkgs.lib; };
-    util = dir { of = ./util; mapFunc = _: import; };
+    inherit (nixpkgs) lib;
+    dir = import ./util/list-dir.nix { inherit lib; };
+    util = dir { of = ./util; mapFunc = _: v: (import v) { inherit lib; }; };
     inputs = flakeInputs // { inherit util; };
 
     conditionallyProvideInputs = func: inputs:
@@ -59,27 +60,41 @@
 
     list = [
       # Outputs tagged with a `<system>`:
-      (flake-utils.lib.eachDefaultSystem (sys: {
-        # TODO: do we have other checks? packages? etc
-        checks = with nixpkgs.lib; let
+      (flake-utils.lib.eachDefaultSystem (sys: let
+        pkgs = nixpkgs.legacyPackages.${sys};
+
+        # Re-export the root derivations of the configurations as checks
+        # (initially this was for garnix; now it's for convenience).
+        configurations = with lib; let
           tagAndExtract = { tag, ex }: mapAttrs'
-            (n: v: {
-              name = "${tag}/${n}";
-              value = ex v;
-            })
+            (n: v: { name = "${tag}/${n}"; value = ex v; })
             self."${tag}Configurations"
           ;
-          drvs =
-            (tagAndExtract { tag = "nixos"; ex = d: d.config.system.build.toplevel; }) //
-            (tagAndExtract { tag = "darwin"; ex = d: d.system; }) //
-            (tagAndExtract { tag = "home"; ex = d: d.activationPackage; });
+          drvs = {}
+            // (tagAndExtract { tag = "nixos"; ex = d: d.config.system.build.toplevel; })
+            // (tagAndExtract { tag = "darwin"; ex = d: d.system; })
+            // (tagAndExtract { tag = "home"; ex = d: d.activationPackage; })
+          ;
         in
           filterAttrs (n: v: v.system == sys) drvs;
 
+        # Modules in `util`s can have a `checks: { pkgs }: { /* drv set */ }`
+        # attribute:
+        utilChecks = with lib; lib.pipe util [
+          (filterAttrsRecursive (n: v: n == "checks" && builtins.isFunction v))
+          (mapAttrsRecursive (_: v: recurseIntoAttrs (v { inherit pkgs; })))
+          (recurseIntoAttrs)
+        ];
+      in {
+        # TODO: do we have other checks?
+        # package passthru tests?
+        # nixos module tests?
+        # util tests?
+        checks = utilChecks;
+
         # TODO: packages: ./packages
         # TODO: apps: getExe + ./packages?
-        apps.ragenix = ragenix.apps.${sys}.ragenix;
-        programs.ragenix = self.apps.ragenix.defaultPackage.${sys}; # Just so garnix will build this
+        packages.ragenix = ragenix.packages.${sys}.default; # Just so garnix will build this
 
         # TODO: devShells?
       }))
@@ -145,7 +160,7 @@
       { homeConfigurations = dir {
         of = ./machines;
         recurse = true;
-        includeFilesWithExtension = "home.nix";
+        includeFilesWithExtension = "home.nix"; # i.e. `arm.home.nix`
         includeDirsWithFile = "home.nix";
 
         # Always make the flake inputs accessible to modules via `extraSpecialArgs`:
