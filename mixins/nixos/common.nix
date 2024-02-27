@@ -112,7 +112,7 @@ in {
   environment.etc."xdg/user-dirs.defaults".text = "";
 
   environment.systemPackages = with pkgs; [
-    bat ripgrep unzip file hexyl lsof
+    bat ripgrep unzip file hexyl lsof tree
 
     htop # TODO: config to show CPU temps and freq
     i7z

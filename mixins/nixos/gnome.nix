@@ -165,7 +165,7 @@
 
         keybindings = {
           show-screen-recording-ui = ["<Shift><Super>r"];
-          show-screenshot-ui = ["<Shift><Super>s"];
+          show-screenshot-ui = ["<Shift><Super>s" "Print"];
         };
 
         # TODO: move all of these elsewhere (home-manager config? top-level?)
