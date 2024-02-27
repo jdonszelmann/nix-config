@@ -185,6 +185,9 @@
       /* lib */
       { lib = { inherit util; }; }
 
+      /* resources */
+      { resources.pubKeys = import ./resources/secrets/pub.nix; }
+
       # TODO: templates
     ];
   in builtins.foldl' (a: b: a // b) { } list;
