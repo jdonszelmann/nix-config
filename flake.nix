@@ -49,7 +49,11 @@
   outputs = flakeInputs@{ self, nixpkgs, darwin, home-manager, flake-utils, ragenix, ... }: let
     inherit (nixpkgs) lib;
     dir = import ./util/list-dir.nix { inherit lib; };
-    util = dir { of = ./util; mapFunc = _: v: (import v) { inherit lib; }; };
+    import-util = lib: dir {
+      of = ./util; mapFunc = _: v: (import v) { inherit lib; };
+    };
+
+    util = import-util lib;
     inputs = flakeInputs // { inherit util; };
 
     conditionallyProvideInputs = func: inputs:
@@ -59,10 +63,33 @@
     mapFunc = _: inpPath: conditionallyProvideInputs (import inpPath) inputs;
     defaultFunc = mapFunc;
 
+    drvs = set: builtins.removeAttrs set [
+      "overrideScope" "overrideScope'" "newScope" "packages" "callPackage"
+    ]; # Deny list of non-drv/attrset things in the `pkgsIntel` set.
+
+    customPkgFuncs = dir { of = ./packages; mapFunc = _: import; };
+    customPackagesOverlay = lib.composeManyExtensions [
+      # add `lib.util`
+      (_: prev: { lib = prev.lib.extend (f: _: { util = import-util f; }); })
+      # add `pkgs.rrbutani`
+      (fin: _: { rrbutani = with fin.lib; makeScope fin.newScope (r: mapAttrs'
+        (n: pkgFun: { name = /* case? */ n; value = r.callPackage pkgFun {}; })
+        customPkgFuncs
+      ); })
+      # add extra packages; note: intentionally references `prev`, not `final`
+      (_: prev: with lib; let r = prev.rrbutani; v = attrValues; in {
+        rrbutani = foldl' recursiveUpdate r (catAttrs "extras" (v (drvs r)));
+      })
+    ];
+
     list = [
       # Outputs tagged with a `<system>`:
       (flake-utils.lib.eachDefaultSystem (sys: let
-        pkgs = nixpkgs.legacyPackages.${sys};
+        # Note: apply the default overlay:
+        pkgs = nixpkgs.legacyPackages.${sys}.extend self.overlays.default;
+        available = pkgs.lib.util.pkgs.isDrvAndAvailable {
+          system = pkgs.stdenv.hostPlatform;
+        };
 
         # Re-export the root derivations of the configurations as checks
         # (initially this was for garnix; now it's for convenience).
@@ -82,26 +109,38 @@
         # Modules in `util`s can have a `checks: { pkgs }: { /* drv set */ }`
         # attribute:
         utilChecks = with lib; lib.pipe util [
-          (filterAttrsRecursive (n: v: n == "checks" && builtins.isFunction v))
+          (filterAttrsRecursive (n: v:
+            (builtins.isAttrs v) ||
+            (n == "checks" && builtins.isFunction v)
+          ))
           (mapAttrsRecursive (_: v: recurseIntoAttrs (v { inherit pkgs; })))
-          (recurseIntoAttrs)
+          # TODO: flatten
         ];
       in {
         # TODO: do we have other checks?
-        # package passthru tests?
+        # package passthru tests? (maybe steal `findChecks`)
         # nixos module tests?
         # util tests?
-        checks = utilChecks;
+        # `all` for convenience?
+        checks = utilChecks // configurations;
 
-        # TODO: packages: ./packages
-        # TODO: apps: getExe + ./packages?
-        packages.ragenix = ragenix.packages.${sys}.default; # Just so garnix will build this
+        # TODO: allow packages to refer to flake inputs?
+
+        # note: this is specifically *not* filtered with `available`
+        legacyPackages = pkgs.rrbutani;
+
+        # note: pulling from the overlay so packages can reference each other
+        packages = lib.filterAttrs available pkgs.rrbutani // {
+          # extras:
+          ragenix = ragenix.packages.${sys}.default; # Just so garnix will build this
+        };
 
         # TODO: devShells?
       }))
 
       /* nixpkgs overlays */
       { overlays = dir { of = ./overlays; inherit mapFunc; }; }
+      { overlays.default = customPackagesOverlay; }
 
       /* NixOS stuff */
       { nixosModules = dir {
