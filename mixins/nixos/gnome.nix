@@ -21,6 +21,8 @@
           secondary-color = "#000000";
         };
 
+        calendar.show-weekdate = true;
+
         interface = {
           color-scheme = "prefer-dark";
           clock-format = "12h";

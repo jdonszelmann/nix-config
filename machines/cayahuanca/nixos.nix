@@ -342,12 +342,16 @@ inputs@{ nixos-hardware, ragenix, ... }:
     })
 
     # misc:
-    ({
+    ({ lib, ... }: {
       nix.settings = {
         extra-sandbox-paths = [
           "/nix/var/cache"
         ];
         builders-use-substitutes = true;
+
+        # # https://mynixos.com/nixpkgs/option/nix.settings.sandbox
+        # # https://zimbatm.com/notes/nix-packaging-the-heretic-way
+        # sandbox = lib.mkForce "relaxed";
 
         connect-timeout = 2;
         fallback = true;
@@ -360,10 +364,69 @@ inputs@{ nixos-hardware, ragenix, ... }:
         MOZ_USE_XINPUT2 = "1";
       };
     })
+
+    ({
+      virtualisation.docker = {
+        enable = true;
+        enableOnBoot = true;
+      };
+      users.users.rahul.extraGroups = [ "docker" ];
+    })
+
+    # Custom nix fork (TODO):
+    #   - lazy trees: https://github.com/NixOS/nix/pull/6530
+    #   - multi-threaded evaluator: https://github.com/NixOS/nix/pull/10938
+    #   - flake schemas: https://github.com/NixOS/nix/pull/8892
+    #   - git fetcher tweaks (incremental w/submodules): https://github.com/rrbutani/nix/tree/feat/git-fetchers-tweaks
+    #     + actually... this is Obviated by the git fetcher rewrite in nix 2.20+
+    #       * see: https://gist.github.com/rrbutani/7776583cf474a32b815ea26c0e7ddce1
+    ({ pkgs, lib, ... }: {
+      environment.systemPackages = let
+        nixFork = let
+          # flake = builtins.getFlake {
+          #   url = "github:rrbutani/nix";
+          #   ref = "dist/lazy-trees-with-git-fetcher-tweaks";
+          #   rev = "ff4b55d525865d7987919ffc177a119d93213cc1";
+          # };
+          # flake = builtins.getFlake "github:rrbutani/nix/dist/lazy-trees-with-git-fetcher-tweaks?rev=ff4b55d525865d7987919ffc177a119d93213cc1";
+          # flake = builtins.getFlake "github:rrbutani/nix?rev=ff4b55d525865d7987919ffc177a119d93213cc1";
+          flake = builtins.getFlake "github:NixOS/nix?rev=f1deb42176cadfb412eb6f92315e6aeef7f2ad75"; # 2.23.3
+        in flake.packages.${pkgs.stdenv.hostPlatform.system}.nix;
+
+        nix-custom = pkgs.runCommandNoCC "nix-exp" {} ''
+          mkdir -p $out/bin
+          ln -s ${lib.getExe nixFork} $out/bin/$name
+        '';
+      in [ nix-custom ];
+    })
+
+    ({ pkgs, ... }: {
+      environment.systemPackages = [ pkgs.intel-gpu-tools.out ]; # for `intel_gpu_top`
+    })
+
+    {
+      programs.gnome-terminal.enable = true;
+    }
+
+    ({ pkgs, ... }: {
+      services.udev.packages = [ pkgs.picotool ];
+      users.groups.plugdev = {};
+      users.users.rahul.extraGroups = [ "plugdev" ];
+
+      services.udev.extraRules = ''
+        SUBSYSTEM=="usb", \
+          ATTRS{idVendor}=="2e8a", \
+          ATTRS{idProduct}=="000c", \
+          TAG+="uaccess" \
+          MODE="660", \
+          GROUP="plugdev"
+      '';
+    })
   ];
 
   # TODO: compose key:
   # https://gist.github.com/m93a/187539552593dd4ed8b122167c09384c
+
 }
 
 # TODO: persist .cache/nix/{fetcher-cache-v1.sqlite{,-journal},eval-cache-v4,binary-cache-v6.sqlite{,-journal},flake-registry.json}

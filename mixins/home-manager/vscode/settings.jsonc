@@ -29,6 +29,8 @@
       "hermeticity"
     ],
 
+    "remote.SSH.connectTimeout": 15,
+
     // TODO: schema
     // https://stackoverflow.com/questions/66838431/where-is-the-json-schema-of-vscode-settings-json
     "$schema": ""

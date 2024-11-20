@@ -235,6 +235,13 @@ inputs@{ config, pkgs, ragenix, system, nix-index-database,
         submodules.fetchJobs = 0;
 
         merge.conflictstyle = "diff3";
+
+        # https://gist.github.com/Kovrinic/ea5e7123ab5c97d451804ea222ecd78a
+        #
+        # make it so that we don't have to manually rewrite submodule URLs (for
+        # repos that are private) to use SSH instead of HTTPS — we purposefully
+        # do not set up HTTPS GitHub auth
+        url."git@github.com:".insteadOf = "https://github.com/";
       }; # TODO; can also use `.includes.---.{condition,contents}`
       ignores = [
         "*.swp"

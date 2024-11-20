@@ -86,7 +86,13 @@ in {
   nix = {
     settings = {
       # Enable flakes!
-      extra-experimental-features = [ "nix-command" "flakes" ];
+      extra-experimental-features = [
+        "nix-command" "flakes"
+
+        # note: needs nix v2.19+
+        # https://nix.dev/manual/nix/2.22/command-ref/conf-file#conf-impure-env
+        "configurable-impure-env"
+      ];
       sandbox = true;
 
       # Inherit this flake's extra substituters.
@@ -98,6 +104,9 @@ in {
       # overwritten instead of appended to if we set `trusted-users` anywhere):
       trusted-users = [ "root" ];
     };
+
+    # 2.20 has git fetcher improvements; 2.19 has configurable-impure-env
+    package = pkgs.nixVersions.nix_2_22;
   };
 
   # TODO: spin off with the above, gate on this being enabled.
@@ -113,6 +122,7 @@ in {
 
   environment.systemPackages = with pkgs; [
     bat ripgrep unzip file hexyl lsof tree
+    usbutils
 
     htop # TODO: config to show CPU temps and freq
     i7z

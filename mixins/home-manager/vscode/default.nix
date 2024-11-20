@@ -67,6 +67,8 @@ in {
       codezombiech.gitignore
       # TODO: codeowners?
 
+      antfu.slidev
+
       # TODO: tintinweb.graphviz-interactive-preview
 
       # TODO: x86 instruction reference by whiteout

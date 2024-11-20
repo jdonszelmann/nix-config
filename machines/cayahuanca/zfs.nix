@@ -57,7 +57,7 @@
         # Backup `dev` more frequently but don't keep these backups around for
         # very long.
         monthly = 0;
-        daily = 7;
+        daily = 14;
         hourly = 48;
         frequently = 8;
         frequent_period = 15;

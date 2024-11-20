@@ -190,5 +190,5 @@
 
       # TODO: templates
     ];
-  in builtins.foldl' (a: b: a // b) { } list;
+  in builtins.foldl' lib.recursiveUpdate { } list;
 }
