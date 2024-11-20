@@ -5,7 +5,7 @@
 
   config = {
     # TODO: wayland?
-    services.xserver.libinput = {
+    services.libinput = {
       enable = true;
       mouse = {
         naturalScrolling = true;

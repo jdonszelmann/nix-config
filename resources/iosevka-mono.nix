@@ -4,7 +4,7 @@
     family = "Iosevka Custom";
     spacing = "quasi-proportional";
     serifs = "sans";
-    no-cv-ss = true;
+    noCvSs = true;
     export-glyph-names = false;
 
     variants.inherits = "ss17";

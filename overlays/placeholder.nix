@@ -1,8 +1,8 @@
 # (optional: we can ask for flake inputs)
-{ flu
+{ flake-utils
 , ...
 }:
 
 final: prev: {
-  
+
 }

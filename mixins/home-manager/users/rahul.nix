@@ -7,6 +7,8 @@ inputs@{ config, pkgs, ragenix, system, nix-index-database,
     ../vscode
 
     # <work.nix>
+
+    nix-index-database.hmModules.nix-index
   ];
 
 
@@ -43,7 +45,7 @@ inputs@{ config, pkgs, ragenix, system, nix-index-database,
       # TODO: switch to managing the .cargo/config file ourselves +
       # ditch this registry entry when `sparse-registry` hits stable!
       ".cargo/registry"
-      ".cargo/config"
+      ".cargo/config.toml"
 
       # TODO:
       # /var/lib/systemd/coredump?
@@ -88,7 +90,7 @@ inputs@{ config, pkgs, ragenix, system, nix-index-database,
 
   home.packages = with pkgs; [
     fd
-    rnix-lsp
+    nil
     # ragenix.packages.${system}.ragenix # not needed, don't use this that often
 
 
@@ -118,7 +120,6 @@ inputs@{ config, pkgs, ragenix, system, nix-index-database,
     nix-output-monitor nix-du nix-tree nix-diff
 
     #
-    comma
 
     eyedropper
 
@@ -467,8 +468,8 @@ inputs@{ config, pkgs, ragenix, system, nix-index-database,
   # TODO: probably spin this off, tie to `nix-locate`'s package..
   # TODO: reference $XDG_HOME_DIR somehow?
   #   - https://github.com/bennofs/nix-index/blob/e7c66ba52fcfba6bfe51adb5400c29a9622664a2/src/bin/nix-index.rs#L307
-  home.file.".cache/nix-index/files".source = nix-index-database.legacyPackages.${system}.database;
-  # TODO: switch to using the new home-manager module for ^ (essentially the same thing)
+  # home.file.".cache/nix-index/files".source = nix-index-database.legacyPackages.${system}.database;
+  programs.nix-index-database.comma.enable = true;
   # TODO: update ^ to support aarch64-darwin, when we get around to it..
 
 }

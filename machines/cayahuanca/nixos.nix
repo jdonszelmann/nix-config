@@ -140,15 +140,18 @@ inputs@{ nixos-hardware, ragenix, ... }:
       # Don't suspend on lid close.
       # services.logind.lidSwitch = "ignore";
 
+      services.displayManager = {
+        enable = true; # TODO: why isn't this implied?
+
+        autoLogin = { user = config.users.users.rahul.name; enable = true; };
+        defaultSession = "gnome";
+      };
+
       # the name is misleading?
       services.xserver = {
-        enable = true;
-
         displayManager = {
-          autoLogin = { user = config.users.users.rahul.name; enable = true; };
           gdm = {
             enable = true;
-            # wayland = true;
 
             # Problems with wayland:
             #  - auto login doesn't work (minor)
@@ -164,7 +167,6 @@ inputs@{ nixos-hardware, ragenix, ... }:
             # https://arewewaylandyet.com/
             wayland = true;
           };
-          defaultSession = "gnome";
         };
 
         # desktopManager = {
